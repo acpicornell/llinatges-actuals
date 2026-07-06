@@ -5,3 +5,6 @@ data/contornos19.svg
 # Python
 __pycache__/
 *.pyc
+
+# direnv (local cache; .envrc itself IS committed)
+.direnv/
