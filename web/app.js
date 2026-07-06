@@ -452,7 +452,7 @@ function buildEndem(){
     mallorquí endèmic (LQ Mall alt, absents de Catalunya). Es marquen <b>magrebí</b> amb una llista curada
     (l'INE per nacionalitat només en publica el top-20); <b>no</b> es confonen amb els d'ètim andalusí ja
     establerts fa segles (Bennàssar, Binimelis), que són autòctons.</div>
-    <div class="caveat"><span class="xu">xueta</span> <b>Capa històrica, no estadística.</b> Marca els cognoms
+    <div class="caveat"><span class="xu">xueta</span> <b>Marca històrica, no estadística.</b> Marca els cognoms
     de la <b>llista canònica de 15 llinatges xuetes</b> (descendents dels conversos jueus mallorquins, fixada
     per M. Forteza): Aguiló, Bonnín, Cortès, Fortesa, Fuster, Martí, Miró, Picó, Pinya, Pomar, Segura, Tarongí,
     Valentí, Valleriola, Valls. És <b>ortogonal</b> a català/castellà (són cognoms catalans). <b>Important:</b>
@@ -570,9 +570,9 @@ function buildIso(){
         ${drawTree(D.auto.dendro,autochOf)}</div>
     </div>
     <div class="caveat"><b>Comprovat (resposta a «estan homogèniament distribuïts?»):</b> l'arbre i el Mantel
-    de la capa <b>no endèmica</b> (r=${c.r}, p=${c.p}) confirmen que <b>no</b> té aïllament per distància — no és
+    de l'estrat <b>no endèmic</b> (r=${c.r}, p=${c.p}) confirmen que <b>no</b> té aïllament per distància — no és
     que sigui uniforme (es concentra a Palma/costa), sinó que la seva variació és un gradient centre-perifèria,
-    <b>no</b> una estructura fina. L'autòctona sí. Recorda: «no endèmic» és una barreja de castellà i de català
+    <b>no</b> una estructura fina. L'autòcton sí. Recorda: «no endèmic» és una barreja de castellà i de català
     peninsular escampat, no un estrat «castellà» pur. Fulles acolorides per autoctonia del municipi.
     R<sub>ii</sub>/distàncies es calculen sobre els <b>recomptes municipals de l'INE</b> (taxa‰ × padró
     del municipi, cada poble amb ≥5 portadors) i sobre el <b>cens complet de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')}
@@ -586,7 +586,7 @@ function buildMDS(){
   const autochOf=l=>(D.muni_stats[l]||{autoch:0}).autoch;
   document.getElementById("mds-body").innerHTML = `
     <h2>MDS — mapa de semblança entre pobles</h2>
-    <p class="lead">La taula de distàncies de Lasker (capa <b>autòctona</b>, ${D.auto.n_surnames} cognoms
+    <p class="lead">La taula de distàncies de Lasker (estrat <b>autòcton</b>, ${D.auto.n_surnames} cognoms
     endèmics) projectada a un pla 2D: <b>com més a prop dos pobles, més s'assemblen pels cognoms</b>. No és un
     mapa geogràfic —l'orientació és arbitrària—; el color és l'autoctonia del municipi i la mida ~ població.
     Que els pobles interiors i de muntanya s'agrupin lluny de Palma és la mateixa estructura que capta el
@@ -598,7 +598,7 @@ function buildMDS(){
     ${drawMDS(D.auto.mds, D.auto.locs, autochOf)}
     <div class="caveat">Els pobles <b>aïllats</b> (Banyalbufar, Búger, Costitx, Deià, Sóller…) salten a les
     vores: comparteixen pocs cognoms amb la resta → Rii alt. El <b>nucli dens</b> són els pobles que s'assemblen
-    molt entre ells. Calculat sobre els recomptes municipals de l'INE (≥5 per poble), capa autòctona (LQ≥${D.lq_bands.auto}).</div>`;
+    molt entre ells. Calculat sobre els recomptes municipals de l'INE (≥5 per poble), estrat autòcton (LQ≥${D.lq_bands.auto}).</div>`;
   initMDS(document.querySelector("#mds-body svg.mds"));
 }
 
@@ -607,8 +607,8 @@ function buildMethod(){
   const cov=Object.values(D.coverage);
   document.getElementById("metod-body").innerHTML = `
     <h2>Metodologia i límits</h2>
-    <p class="lead">Prova seriosa de si es pot fer isonímia moderna de Mallorca separant l'estoc
-    autòcton (endèmic) de la capa ubiqua/no endèmica, <b>sense lexicon onomàstic</b> i només amb dades obertes.</p>
+    <p class="lead">Prova seriosa de si es pot fer isonímia moderna de Mallorca separant el fons
+    autòcton (endèmic) de l'estrat ubic/no endèmic, <b>sense lexicon onomàstic</b> i només amb dades obertes.</p>
 
     <h3>Conceptes estadístics</h3>
     <p class="hint" style="color:var(--muted)">Definició i interpretació dels estadístics que es fan servir al
@@ -640,9 +640,9 @@ function buildMethod(){
         <h4>Test de Mantel (r, p) — aïllament per distància</h4>
         <p>Pregunta: els pobles <b>a prop en quilòmetres</b> tenen també cognoms més semblants? <b>r</b> va de
         0 (cap relació) a 1 (relació total); <b>p</b> és la probabilitat que sigui casualitat (p&lt;0,05 = real).</p>
-        <p class="imp"><b>En aquest projecte:</b> capa autòctona r≈${D.auto.mantel.r}, p=${D.auto.mantel.p} →
+        <p class="imp"><b>En aquest projecte:</b> estrat autòcton r≈${D.auto.mantel.r}, p=${D.auto.mantel.p} →
         estructura geogràfica significativa (aparellament de proximitat, endogàmia local). El conjunt complet
-        de cognoms: r≈${D.all.mantel.r} → la capa d'immigració l'esvaeix.</p>
+        de cognoms: r≈${D.all.mantel.r} → l'estrat d'immigració l'esvaeix.</p>
       </div>
       <div class="concept">
         <h4>LQ — quocient de localització</h4>
@@ -650,7 +650,7 @@ function buildMethod(){
         <code>LQ = taxa local / taxa Espanya</code>. LQ=1 → igual que pertot; LQ=10 → deu vegades més
         concentrat aquí.</p>
         <p class="imp"><b>Implica:</b> LQ_Mallorca alt = cognom <b>endèmic</b> de l'illa (Cañellas, Bestard).
-        És el filtre que separa l'estoc autòcton del soroll ubic.</p>
+        És el filtre que separa el fons autòcton del soroll ubic.</p>
       </div>
       <div class="concept">
         <h4>MDS i dendrograma — dibuixar les distàncies</h4>
@@ -696,7 +696,7 @@ function buildMethod(){
     «Apellidos por nacionalidad» de l'INE (top-20 del país, <b>dada directa INE</b>); <span class="basis">llista
     curada</span> = la cua per sota d'aquest top-20, marcada a mà (<b>coneixement onomàstic, NO INE</b>, i
     auditable). Cal perquè un cognom marroquí recent i un de mallorquí vell són <b>indistingibles per la
-    distribució de l'INE</b> (tots dos concentrats a Mallorca). Exclou a posta l'estoc andalusí de fa segles
+    distribució de l'INE</b> (tots dos concentrats a Mallorca). Exclou a posta el fons andalusí de fa segles
     (Bennàssar, Binimelis): no és arribada recent.</p>
 
     <p><b>Capa 3 · Proxy de concentració (inferència, DESCRIPTIVA).</b> català vs castellà per
@@ -724,8 +724,8 @@ function buildMethod(){
     <p>S'aplica sobre el filtre d'<b>endemisme</b> (no d'origen: la geografia interna de Mallorca ve dels
     cognoms concentrats a l'illa). Es comparen tots els cognoms amb el subconjunt endèmic (LQ≥${D.lq_bands.auto}).</p>
     <p><b>Resultat:</b> amb tots els cognoms el Mantel és nul (r=${D.all.mantel.r}); amb els endèmics,
-    <b>r=${D.auto.mantel.r}, p=${D.auto.mantel.p}</b>. El filtre revela una estructura geogràfica que la capa
-    ubiqua amagava.</p>
+    <b>r=${D.auto.mantel.r}, p=${D.auto.mantel.p}</b>. El filtre revela una estructura geogràfica que l'estrat
+    ubic amagava.</p>
     <p>Calculat sobre els <b>recomptes municipals de l'INE</b> (≥5 per poble) i el <b>cens complet</b>
     (${D.all.n_surnames.toLocaleString('ca')} cognoms): el senyal és robust.</p>
 
@@ -749,7 +749,7 @@ function buildMethod(){
 
     <h3>5. Veredicte preliminar</h3>
     <p>El mètode <b>funciona</b> per a una avaluació exploratòria: amb dades obertes i sense inventar res,
-    aïlla l'estoc autòcton i en revela l'estructura geogràfica (r≈${D.auto.mantel.r}). Els límits (cens de partida
+    aïlla el fons autòcton i en revela l'estructura geogràfica (r≈${D.auto.mantel.r}). Els límits (cens de partida
     = cognoms ≥20 a Espanya, secret &lt;5, contaminació d'immigració recent) són reals i s'han de mantenir a la vista.</p>
     <p class="src">Fonts: INE — API de cognoms (operació APEL: total nacional + taxa per província + taxa per
     municipi) · INE — padró (operació 22, taula 2860) · NGIB/IDEIB (coords) ·
