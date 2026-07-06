@@ -5,7 +5,8 @@ but here we take each municipality SEAT nucleus. Writes data/coords_muni.csv.
 """
 import json, csv, unicodedata, urllib.parse, urllib.request
 from pathlib import Path
-HERE=Path(__file__).parent
+HERE=Path(__file__).resolve().parent
+ROOT=HERE.parent            # repo root (this script lives in src/)
 BASE="https://ideib.caib.es/geoserveis/rest/services/public/NGIB/MapServer/0/query"
 def norm(s):
     s=unicodedata.normalize("NFKD",s or "");return "".join(c for c in s if not unicodedata.combining(c)).lower().strip()
@@ -25,7 +26,7 @@ def pick(fs):
     order={3010:0,977:1,917:2}
     fs.sort(key=lambda f:order.get(f["attributes"]["TIPUS_LOCAL"],9)); return fs[0]
 
-munis=list(json.load(open(HERE/"web/site_data/modern_2025.json"))["municipality_pop"])
+munis=list(json.load(open(ROOT/"web/site_data/modern_2025.json"))["municipality_pop"])
 rows=[]; miss=[]
 for m in munis:
     pre=ascii_prefix(m) or m[:2]
@@ -43,6 +44,6 @@ for m in munis:
         g=f["geometry"]; rows.append([m,round(g["y"],6),round(g["x"],6),f["attributes"]["GRAFIA"]])
     else:
         miss.append(m)
-with open(HERE/"data/coords_muni.csv","w",newline="",encoding="utf-8") as fp:
+with open(ROOT/"data/coords_muni.csv","w",newline="",encoding="utf-8") as fp:
     w=csv.writer(fp); w.writerow(["municipality","lat","lon","ngib_grafia"]); w.writerows(rows)
 print(f"coords: {len(rows)}/{len(munis)}  missing: {miss or 'none'}")

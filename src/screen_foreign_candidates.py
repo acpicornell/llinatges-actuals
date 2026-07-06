@@ -22,8 +22,9 @@ Attribution: "Elaboración propia con datos extraídos del sitio web del INE: ww
 import csv, json, re, unicodedata
 from pathlib import Path
 
-HERE = Path(__file__).parent
-D = HERE / "data"
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent            # repo root (this script lives in src/)
+D = ROOT / "data"
 POP_ESP = 48_600_000
 INE_CAT = ("9", "18", "26", "43"); INE_VAL = ("46", "13", "4"); INE_BAL = "8"
 MASS = 20

@@ -10,8 +10,9 @@ Attribution: "Elaboración propia con datos extraídos del sitio web del INE: ww
 import csv, re, unicodedata, urllib.request
 from pathlib import Path
 
-HERE = Path(__file__).parent
-D = HERE / "data"
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent            # repo root (this script lives in src/)
+D = ROOT / "data"
 SVG_URL = "https://www.ine.es/wstempus/geosvg/ES/CONTORNOS/19"
 UA = {"User-Agent": "Mozilla/5.0 (research; Mallorca surname isonymy; open-data reuse)"}
 

@@ -24,8 +24,9 @@ Attribution: "Elaboración propia con datos extraídos del sitio web del INE: ww
 import csv, json, re, unicodedata
 from pathlib import Path
 
-HERE = Path(__file__).parent
-D = HERE / "data"
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent            # repo root (this script lives in src/)
+D = ROOT / "data"
 
 
 def norm(s):

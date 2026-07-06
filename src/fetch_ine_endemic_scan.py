@@ -24,8 +24,9 @@ import csv, json, re, threading, time, unicodedata, urllib.request, urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-HERE = Path(__file__).parent
-D = HERE / "data"
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent            # repo root (this script lives in src/)
+D = ROOT / "data"
 OUT = D / "ine_endemic_scan.csv"
 MAPA = "https://www.ine.es/apellidos/mapaWidget?apellido={}&tipo=1&vista=muni"
 UA = {"User-Agent": "Mozilla/5.0 (research; Mallorca surname isonymy; open-data reuse)"}

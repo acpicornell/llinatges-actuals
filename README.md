@@ -27,17 +27,20 @@ Exploratory. **Not deployed** anywhere.
 
 ## Pipeline
 
-1. `fetch_ine_endemic_scan.py` — scan every INE national ≥20 surname through the municipality
+All scripts live in `src/` and are run from the repo root (`python src/<script>.py`); they read
+`data/` and write `web/site_data/` relative to the repo root, so the invocation directory does not matter.
+
+1. `src/fetch_ine_endemic_scan.py` — scan every INE national ≥20 surname through the municipality
    view; keep those present in Mallorca with `mall_json = {town: rate‰}`. → `ine_endemic_scan.csv`
-2. `build_census.py` — reconstruct counts (`rate‰ × padrón / 1000`) → `census_muni_2025.csv`
+2. `src/build_census.py` — reconstruct counts (`rate‰ × padrón / 1000`) → `census_muni_2025.csv`
    (**7,975 surnames × 51 municipalities**, ≈73 % population coverage).
-3. `fetch_ine_census_prov.py` — per-province rates for every present surname → `census_prov.csv`.
-4. `build_modern.py` — endemism (LQ vs Spain), origin (Catalan-domain LQ + nationality screen +
+3. `src/fetch_ine_census_prov.py` — per-province rates for every present surname → `census_prov.csv`.
+4. `src/build_modern.py` — endemism (LQ vs Spain), origin (Catalan-domain LQ + nationality screen +
    `FOREIGN_MANUAL` gazetteer), and the spatial isonymy (Rii, Lasker, Mantel, MDS, dendrogram)
-   → `web/site_data/modern_2025.json`. Uses the vendored `isonymy.py`.
-5. `screen_foreign_candidates.py` — review helper: surface rare surnames that may be foreign
+   → `web/site_data/modern_2025.json`. Uses the vendored `src/isonymy.py`.
+5. `src/screen_foreign_candidates.py` — review helper: surface rare surnames that may be foreign
    (to extend the gazetteer by hand; `foreign_review.csv`).
-6. `muni_ids.py` — INE contour region-id → Mallorca town resolver (shared by the harvesters).
+6. `src/muni_ids.py` — INE contour region-id → Mallorca town resolver (shared by the harvesters).
 
 ## Key results (2025)
 

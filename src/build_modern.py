@@ -25,10 +25,11 @@ CAVEATS baked into the honesty of the output:
 import csv, json, re, unicodedata
 from pathlib import Path
 import numpy as np, pandas as pd
-import isonymy as iso   # vendored in this project root (was ../../src in the medieval repo)
+import isonymy as iso   # vendored alongside in src/ (was ../../src in the medieval repo)
 
-HERE = Path(__file__).parent
-D = HERE / "data"
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent            # repo root (this script lives in src/)
+D = ROOT / "data"
 POP_ESP = 48_600_000
 # INE surname API (operation APEL) province map keys (CONTORNOS/20) for the origin axis.
 # One clean national source replaces Idescat (Catalonia), IVE (Valencia) and IBESTAT
@@ -359,7 +360,7 @@ def main():
     tot_all=float(dfi["freq"].sum()); overall={o:0.0 for o in ORIGINS}
     for t in dfi.itertuples(): overall[origin[t.surname]]+=t.freq
     overall={o:round(overall[o]/tot_all,4) for o in ORIGINS}
-    out={"slice":"Surname list: IBESTAT 2025 top-50/municipality (442); counts: INE municipality reconstruction",
+    out={"slice":"Surname list: full INE national census (surnames >=20 in Spain, present in Mallorca); counts: INE municipality reconstruction",
          "isonymy_source":iso_src,
          "muni_stats":muni_stats,"muni_surnames":muni_surnames,
          "origins":ORIGINS,"origin_overall":overall,"muni_origin":muni_origin,
@@ -379,8 +380,8 @@ def main():
              "auto":{"n":len(autoset),
                      "median_cv":_med([spat[s]["cv"] for s in autoset]),
                      "median_nmuni":_med([spat[s]["nmuni"] for s in autoset])}}}
-    (HERE/"web"/"site_data").mkdir(parents=True,exist_ok=True)
-    (HERE/"web"/"site_data"/"modern_2025.json").write_text(json.dumps(out,ensure_ascii=False))
+    (ROOT/"web"/"site_data").mkdir(parents=True,exist_ok=True)
+    (ROOT/"web"/"site_data"/"modern_2025.json").write_text(json.dumps(out,ensure_ascii=False))
     print(f"municipalities: {len(munis)} | pop covered: {pop_mall:,}")
     print(f"surnames: all={len(allset)}  autochthonous={len(autoset)}  non-endemic={len(nonendset)}")
     print("LQ sensitivity:", [(s['lq'],s['n_surnames'],s['r'],s['p']) for s in lq_sensitivity])
@@ -393,7 +394,7 @@ def main():
     print("homogeneity:",json.dumps(out["homogeneity"],ensure_ascii=False))
     import statistics as st
     cvs=list(coverage.values())
-    print(f"top-50 coverage: min={min(cvs):.0%} median={st.median(cvs):.0%} max={max(cvs):.0%}")
+    print(f"census coverage: min={min(cvs):.0%} median={st.median(cvs):.0%} max={max(cvs):.0%}")
     from collections import Counter
     oc=Counter(origin.values())
     print("origin (surnames):",dict(oc))

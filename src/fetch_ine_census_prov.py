@@ -18,8 +18,9 @@ import csv, json, re, sys, time, unicodedata, urllib.request, urllib.parse
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
-HERE = Path(__file__).parent
-D = HERE / "data"
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parent            # repo root (this script lives in src/)
+D = ROOT / "data"
 OUT = D / "census_prov.csv"
 UA = {"User-Agent": "Mozilla/5.0 (research; Mallorca surname isonymy; open-data reuse)"}
 WORKERS, PAUSE = 8, 0.25

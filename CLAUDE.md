@@ -48,11 +48,15 @@ Read `README.md` first (sources + pipeline + results).
 
 ## Pipeline (INE → JSON → web)
 
-`fetch_ine_endemic_scan.py` (national scan → `ine_endemic_scan.csv`) → `build_census.py`
-→ `fetch_ine_census_prov.py` (province rates) → `build_modern.py` (endemism + origin +
-isonymy via the vendored `isonymy.py` → `web/site_data/modern_2025.json`).
-Helpers: `muni_ids.py` (INE contour region-id → town), `screen_foreign_candidates.py`
-(gazetteer review), `fetch_coords_muni.py` (NGIB coords).
+All Python lives in `src/`; run each from the repo root (`python src/<script>.py`). Scripts
+resolve `data/` and `web/site_data/` relative to the **repo root** (`ROOT = Path(__file__).resolve().parent.parent`),
+not the cwd — so they work regardless of where you invoke them from.
+
+`src/fetch_ine_endemic_scan.py` (national scan → `ine_endemic_scan.csv`) → `src/build_census.py`
+→ `src/fetch_ine_census_prov.py` (province rates) → `src/build_modern.py` (endemism + origin +
+isonymy via the vendored `src/isonymy.py` → `web/site_data/modern_2025.json`).
+Helpers: `src/muni_ids.py` (INE contour region-id → town), `src/screen_foreign_candidates.py`
+(gazetteer review), `src/fetch_coords_muni.py` (NGIB coords).
 
 ## Key results (2025)
 
