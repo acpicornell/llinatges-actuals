@@ -27,8 +27,12 @@ Exploratory. **Not deployed** anywhere.
 
 ## Pipeline
 
-All scripts live in `src/` and are run from the repo root (`python src/<script>.py`); they read
-`data/` and write `web/site_data/` relative to the repo root, so the invocation directory does not matter.
+Dev environment is pinned with **Nix**: `nix develop` gives Python + `numpy`/`pandas`/`scipy`
+(`flake.nix`, locked to a nixpkgs rev in `flake.lock` — the same rev as `llinatges-balears`).
+`requirements.txt` is a pip fallback for non-Nix setups. The fetchers use only the standard library.
+
+All scripts live in `src/` and are run from the repo root (`nix develop -c python src/<script>.py`);
+they read `data/` and write `web/site_data/` relative to the repo root, so the invocation directory does not matter.
 
 1. `src/fetch_ine_endemic_scan.py` — scan every INE national ≥20 surname through the municipality
    view; keep those present in Mallorca with `mall_json = {town: rate‰}`. → `ine_endemic_scan.csv`

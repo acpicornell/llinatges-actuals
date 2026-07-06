@@ -48,7 +48,11 @@ Read `README.md` first (sources + pipeline + results).
 
 ## Pipeline (INE → JSON → web)
 
-All Python lives in `src/`; run each from the repo root (`python src/<script>.py`). Scripts
+Dev env is pinned with Nix: `nix develop` (from `flake.nix`, locked in `flake.lock` — same nixpkgs
+rev as `llinatges-balears`) gives Python + `numpy`/`pandas`/`scipy`; `requirements.txt` is the pip
+fallback. The fetchers are stdlib-only; only `build_modern.py`/`isonymy.py` need the scientific stack.
+
+All Python lives in `src/`; run each from the repo root (`nix develop -c python src/<script>.py`). Scripts
 resolve `data/` and `web/site_data/` relative to the **repo root** (`ROOT = Path(__file__).resolve().parent.parent`),
 not the cwd — so they work regardless of where you invoke them from.
 

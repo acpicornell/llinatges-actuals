@@ -1,0 +1,5 @@
+# Primary dev env is Nix: `nix develop` (see flake.nix, pinned via flake.lock).
+# This file is a pip fallback for non-Nix environments.
+pandas>=2.0
+numpy>=1.24
+scipy>=1.10
