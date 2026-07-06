@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ca">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Isonímia moderna — Mallorca 2025 (exploració)</title>
+  <link rel="stylesheet" href="vendor/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Isonímia moderna · Mallorca 2025 <span class="tag">EXPLORACIÓ</span></h1>
+    <p class="sub">Estructura de cognoms per municipi a partir d'<strong>IBESTAT 2025</strong>
+      (1r cognom, residència). Dos eixos: <b>endemisme</b> (filtre per a la isonímia) i <b>origen real</b>
+      català/castellà (concentració a Catalunya, Balears o País Valencià vs. Espanya).
+      <b class="warn">Dades = top-50 per municipi</b>, no la distribució completa.</p>
+  </header>
+
+  <main>
+    <aside id="sidebar">
+      <section class="box" id="search-box">
+        <h2>Cerca un cognom (2025)</h2>
+        <input id="q" type="search" placeholder="p. ex. Ferrer, Garcia, Cañellas…" autocomplete="off">
+        <div id="suggest"></div>
+        <div id="result"></div>
+        <p class="xu-leg"><span class="xu">xueta</span> = cognom de la llista canònica de 15 llinatges
+          xuetes (descendents dels conversos jueus mallorquins, M. Forteza). Marca <b>lineatges que inclouen</b>
+          descendents de conversos, <b>no</b> que cada portador ho sigui.</p>
+      </section>
+
+      <section class="box" id="headline">
+        <h2>El resultat</h2>
+        <div id="mantel-contrast"></div>
+      </section>
+
+      <section class="box" id="legend-box">
+        <h2>Autoctonia del municipi</h2>
+        <p class="hint">Fracció de la massa (top-50) amb cognoms autòctons (endèmics, LQ≥1.3).
+          Verd = interior autòcton · vermell = Palma/costa (no endèmic). Color dels nodes.
+        <div id="legend"></div>
+      </section>
+
+      <section class="box" id="stats"></section>
+    </aside>
+
+    <div id="view">
+      <nav id="tabs">
+        <button data-tab="map" class="active">Mapa</button>
+        <button data-tab="munis">Municipis</button>
+        <button data-tab="endem">Endemisme</button>
+        <button data-tab="origen">Origen</button>
+        <button data-tab="iso">Isonímia</button>
+        <button data-tab="mds">MDS</button>
+        <button data-tab="concl">Conclusions</button>
+        <button data-tab="metod">Metodologia</button>
+      </nav>
+      <div id="map" class="panel active"></div>
+      <div id="munis" class="panel"><div id="munis-body"></div></div>
+      <div id="endem" class="panel"><div id="endem-body"></div></div>
+      <div id="origen" class="panel"><div id="origen-body"></div></div>
+      <div id="iso" class="panel"><div id="iso-body"></div></div>
+      <div id="mds" class="panel"><div id="mds-body"></div></div>
+      <div id="concl" class="panel"><article id="concl-body"></article></div>
+      <div id="metod" class="panel"><article id="metod-body"></article></div>
+    </div>
+  </main>
+
+  <script src="vendor/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# Re-downloadable INE cache (≈7 MB): muni_ids.py re-fetches it from CONTORNOS/19 if missing.
+# The curated CSV/JSON the pipeline reads are committed.
+data/contornos19.svg
+
+# Python
+__pycache__/
+*.pyc
