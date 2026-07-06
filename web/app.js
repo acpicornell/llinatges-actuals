@@ -1,5 +1,5 @@
 "use strict";
-// EXPLORATION viewer — modern (IBESTAT 2025) Mallorca surname isonymy.
+// EXPLORATION viewer — modern (INE census 2025) Mallorca surname isonymy.
 let D, MAP, MARKERS = {};
 
 fetch("site_data/modern_2025.json").then(r => r.json()).then(d => { D = d; init(); })
@@ -57,12 +57,12 @@ function buildOrigin(){
     Martínez 1,6). Per això el llindar valencià és <b>més alt</b> (LQ≥${D.lq_bands.val}, no ${D.lq_bands.origin}):
     rescata els valencians de debò (Femenia, Miralles, Català, Gomis…) sense deixar passar García ni Navarro.
     <br>✓ <b>El recompte provincial complet de l'INE arregla els antics residus:</b> <b>Muntaner</b> i <b>Pomar</b>,
-    que amb el top-50 d'IBESTAT semblaven rars i queien a «castellà», tenen de fet LQ_Bal altíssim (28,8 i 12,5)
+    que en una llista truncada per municipi semblarien rars i castellans, tenen de fet LQ_Bal altíssim (28,8 i 12,5)
     → ara <b>català</b> correctament. No detecta l'estrat andalusí/mossàrab: cognoms com <b>Bennàssar</b>,
     <b>Binimelis</b> o <b>Bibiloni</b>, d'ètim àrab però mallorquins <b>fa segles</b>, són —correctament— autòctons,
     <b>no</b> immigració recent.<br>⚠ <b>Orígens forans (${foreign.length}):</b> ${flist}. Detectats amb les llistes
     INE per nacionalitat <b>+ una llista curada</b> (l'INE només publica el top-20 per país). Encara
-    <b>subestimats</b> (cap top-50 complet) i algun rar sense regió assignada (Nineb, Masaquiza queden per revisar).</div>
+    <b>subestimats</b> (l'INE per nacionalitat només arriba al top-20 per país) i algun rar sense regió assignada (Nineb, Masaquiza queden per revisar).</div>
     <h3 class="osub">Composició per municipi (% de la massa de cognoms rastrejada, INE)</h3>
     <table><thead>${th}</thead><tbody>${rows}</tbody></table>`;
 }
@@ -169,8 +169,8 @@ function buildConclusions(){
 
   document.getElementById("concl-body").innerHTML = `
   <h2>Conclusions <span class="tag">EXPLORACIÓ</span></h2>
-  <p class="lead">Instantània de 2025 (IBESTAT), ${D.n_municipalities} municipis, ${totPop.toLocaleString('ca')}
-  persones, amb els seus propis límits (secret &lt;5 per poble; la llista de cognoms ve del top-50). Aquestes
+  <p class="lead">Instantània de 2025 (cens de cognoms de l'INE), ${D.n_municipalities} municipis, ${totPop.toLocaleString('ca')}
+  persones, amb els seus propis límits (secret &lt;5 per poble; la llista ve del cens nacional de l'INE, cognoms ≥20 a Espanya). Aquestes
   són les conclusions que aguanten els números.</p>
 
   <h3>1. El filtre d'endemisme converteix un resultat nul en un senyal fort</h3>
@@ -228,7 +228,7 @@ function buildConclusions(){
   (LQ Val ${csc('FEMENIA')&&D.endemism.FEMENIA?D.endemism.FEMENIA.lq_val:''}), <b>Miralles</b>, <b>Català</b>,
   <b>Gomis</b> pel del País Valencià → tots <b>català</b>. I sobretot <b>Muntaner</b> i <b>Pomar</b>: el
   recompte provincial complet de l'INE (LQ_Bal 28,8 i 12,5) mostra que <b>no</b> eren rars sinó fortament
-  balears → deixen de ser el «residu castellà» que eren amb el top-50 d'IBESTAT.</p>
+  balears → deixen de ser el «residu castellà» que serien en una llista truncada per municipi.</p>
   <p class="warn-box">⚠ <b>El País Valencià és sorollós:</b> cognom castellà sobrerepresentat per la repoblació
   aragonesa (Navarro LQ_Val 2,3; Martínez 1,6). Per això s'hi aplica un llindar <b>més alt</b>
   (LQ≥${D.lq_bands.val}) que a Catalunya/Balears (${D.lq_bands.origin}). <b>Residu real:</b> no hi ha detecció
@@ -237,11 +237,12 @@ function buildConclusions(){
 
   <h3>4. Límits honestos</h3>
   <ul>
-    <li><b>Tota l'anàlisi va sobre els recomptes municipals de l'INE</b> (taxa‰ × població, ≥5 per poble;
-    validat a ±1 vs IBESTAT): isonímia, endemisme, composició i navegador. IBESTAT només aporta la <b>llista</b>
-    de 442 cognoms (top-50/municipi) i el padró. Límits: el secret amaga &lt;5 per poble (cobertura
-    ${pc(Math.min(...cov))}–${pc(Math.max(...cov))}, Palma la pitjor) i la llista de partida no enumera els
-    endèmics que no entren a cap top-50. R<sub>ii</sub>/I<sub>ij</sub> dominades pel cap → aproximació defensable.</li>
+    <li><b>Tota l'anàlisi va sobre els recomptes municipals de l'INE</b> (taxa‰ × padró, ≥5 per poble;
+    reconstrucció exacta, la taxa‰ de l'INE surt d'aquest mateix padró): isonímia, endemisme, composició i
+    navegador. La llista de cognoms és el <b>cens nacional de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')} cognoms ≥20 a
+    Espanya presents a Mallorca) i el padró. Límits: el secret amaga &lt;5 per poble (cobertura
+    ${pc(Math.min(...cov))}–${pc(Math.max(...cov))}, Palma la pitjor) i la cua &lt;20 a Espanya queda fora del
+    cens de partida. R<sub>ii</sub>/I<sub>ij</sub> dominades pel cap → aproximació defensable.</li>
     <li><b>Instantània 2025</b>, no sèrie temporal.</li>
     <li>Municipis &lt;400 hab. exclosos; cua &lt;5 suprimida (secret estadístic).</li>
   </ul>
@@ -253,7 +254,7 @@ function buildConclusions(){
     milers de persones).</li>
     <li>El resultat interessant és el <b>contrast</b>: sense filtre, cap geografia; amb filtre, geografia clara.
     Prova que la homogeneïtat aparent dels cognoms moderns és, en bona part, la <b>capa immigrant compartida</b>.</li>
-    <li>Segueix sent <b>exploratori</b>: els límits (llista de partida top-50, secret &lt;5 per poble,
+    <li>Segueix sent <b>exploratori</b>: els límits (cens de partida = cognoms ≥20 a Espanya, secret &lt;5 per poble,
     contaminació d'immigració recent) s'han de mantenir a la vista i no permeten afirmacions demogràfiques
     fortes, sinó una tendència ben fonamentada.</li>
   </ul>`;
@@ -280,7 +281,7 @@ function applySurname(query){
       mk.setRadius(5+Math.sqrt(f)*1.4); mk.setTooltipContent(`${l} · ${f}`); }
     else { mk.setStyle({fillColor:"#39463d",fillOpacity:.3,color:"#000",weight:1}); mk.setRadius(4); mk.setTooltipContent(l); }
   });
-  if(!matched.length){ box.innerHTML=`<p class="none">Cap cognom «${query}» a la llista de 2025 (els 442 del top-50 IBESTAT).</p>`; return; }
+  if(!matched.length){ box.innerHTML=`<p class="none">Cap cognom «${query}» al cens de 2025 (els ${D.all.n_surnames.toLocaleString('ca')} del cens de cognoms de l'INE).</p>`; return; }
   const heads=matched.map(sn=>{const e=D.endemism[sn];
     const kind=e.origin==='català'?'auto':e.origin==='castellà'?'cast':'none';
     return `<span class="sn ${kind}">${sn.replace(/_/g,' ')}</span>${e.xueta?' <span class="xu" title="Llinatge de la llista canònica xueta (marca lineatges que inclouen descendents de conversos, no cada portador)">xueta</span>':''} <span class="lqv">LQ ${e.lq??'—'}</span> · ${e.mall.toLocaleString('ca')}`;
@@ -334,7 +335,7 @@ function buildStats(){
   document.getElementById("stats").innerHTML = `
     <h2>Tall 2025</h2>
     <p><b>${D.n_municipalities}</b> municipis · pob. coberta <b>${D.pop_mallorca_covered.toLocaleString('ca')}</b>
-    <br>cognoms (llista top-50): <b>${D.all.n_surnames}</b> · endèmics <b>${D.auto.n_surnames}</b> · origen català <b>${nCat}</b></p>
+    <br>cognoms (cens INE): <b>${D.all.n_surnames.toLocaleString('ca')}</b> · endèmics <b>${D.auto.n_surnames}</b> · origen català <b>${nCat}</b></p>
     <p><span class="r">⚠ cobertura</span>: mediana ${Math.round(med*100)}%
     (Palma només ${Math.round(Math.min(...cov)*100)}%). Recompte INE (≥5/poble); la cua &lt;5 queda oculta.</p>`;
 }
@@ -344,7 +345,7 @@ function radius(p){ return 5 + Math.sqrt(p)/9; }
 function buildMap(){
   MAP=L.map("map",{zoomControl:true}).setView([39.62,2.98],9);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {attribution:"© OpenStreetMap · llista IBESTAT 2025 · recomptes INE (APEL) · coords NGIB (IDEIB)",maxZoom:18,opacity:0.5}).addTo(MAP);
+    {attribution:"© OpenStreetMap · cens de cognoms INE 2025 (APEL) · coords NGIB (IDEIB)",maxZoom:18,opacity:0.5}).addTo(MAP);
   D.all.locs.forEach(l=>{
     const c=D.coords[l]; if(!c) return;
     const st=D.muni_stats[l], pop=D.municipality_pop[l];
@@ -394,7 +395,7 @@ function buildEndem(){
     mira la concentració al domini català sencer (Principat/Balears/País Valencià): <b>Nebot</b> surt català
     sobretot per LQ Val 33; <b>Femenia/Miralles</b> per LQ Val altíssim tot i tenir LQ Cat baix. L'<b>endemisme</b>
     mira només Mallorca: <b>Muntaner</b> i <b>Pomar</b> hi són massissament concentrats (LQ Bal 28,8 i 12,5) —el
-    recompte complet de l'INE els rescata, que amb el top-50 semblaven rars. I els dos eixos <b>divergeixen</b>:
+    recompte complet de l'INE els rescata, que en una llista truncada semblarien rars. I els dos eixos <b>divergeixen</b>:
     <b>El Khoumssi</b> té LQ Mall altíssim (Mallorca-endèmic) però <b>no</b> és català sinó magrebí → per això
     l'endemisme sol no basta i cal el filtre d'origen + forans.<br>
     ⚠ <b>Cognoms d'immigració recent</b> (Ayoubi, Bouhjira, El Khoumssi…) són, per freqüència, idèntics a un
@@ -523,11 +524,11 @@ function buildIso(){
     que sigui uniforme (es concentra a Palma/costa), sinó que la seva variació és un gradient centre-perifèria,
     <b>no</b> una estructura fina. L'autòctona sí. Recorda: «no endèmic» és una barreja de castellà i de català
     peninsular escampat, no un estrat «castellà» pur. Fulles acolorides per autoctonia del municipi.
-    R<sub>ii</sub>/distàncies es calculen sobre els <b>recomptes municipals de l'INE</b> (taxa‰ × població
-    del municipi, cada poble amb ≥5 portadors; validat a ±1 vs IBESTAT), <b>no</b> sobre el top-50: així es
-    treu el biaix de truncació del top-50, que inflava el contrast entre pobles i infravalorava les viles grans.
-    Efecte: el Mantel dels autòctons passa de 0,38 (top-50) a <b>${u.r}</b> —més suau però igual de significatiu—
-    i el R<sub>ii</sub> puja (Palma +82%, Calvià +204%). Límit que queda: el secret estadístic amaga &lt;5 per poble.</div>`;
+    R<sub>ii</sub>/distàncies es calculen sobre els <b>recomptes municipals de l'INE</b> (taxa‰ × padró
+    del municipi, cada poble amb ≥5 portadors) i sobre el <b>cens complet de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')}
+    cognoms), no una llista truncada per municipi: així no hi ha biaix de truncació que infli el contrast entre
+    pobles ni infravalori les viles grans. El Mantel dels autòctons queda en <b>${u.r}</b>, significatiu.
+    Límit que queda: el secret estadístic amaga &lt;5 per poble.</div>`;
 }
 
 // --- MDS tab: the Lasker-distance table projected to an interactive 2D scatter ------------
@@ -612,16 +613,17 @@ function buildMethod(){
     </div>
 
     <h3>1. Dades (totes obertes)</h3>
-    <p><b>IBESTAT</b>: «50 cognoms més comuns per municipi» (<code>000004A_000009</code>), 2025, <b>1r cognom</b>
-    → NOMÉS la <b>llista</b> de 442 cognoms (i el padró municipal). <b>INE — API de cognoms</b> (operació APEL,
-    la mateixa del cercador d'ine.es): total nacional + <b>taxa per província</b> (<code>mapaWidget</code>) → l'eix
-    d'origen (Catalunya, Balears, País Valencià); i <b>taxa per municipi</b> (<code>mapaWidget&amp;vista=muni</code>)
-    → reconstrucció dels <b>recomptes municipals</b> (taxa‰ × població, ≥5 per poble; validat a ±1 vs IBESTAT)
-    sobre els quals es calcula <b>tota l'anàlisi</b> (isonímia, endemisme, composició i navegador) —més complet
-    que el top-50. Coordenades: NGIB.</p>
-    <p class="hint" style="color:var(--muted)">L'origen abans venia de tres fonts heterogènies (Idescat + IVE
-    via scraping + IBESTAT top-100); ara ve tot de l'API de l'INE per província: unifica la font, neteja el
-    soroll de València i, amb el recompte complet, rescata cognoms que el top-50 undercomptava (Muntaner, Pomar).</p>
+    <p><b>INE — API de cognoms</b> (operació APEL, la mateixa del cercador d'ine.es) — <b>una sola font</b> per a
+    tot: (a) el <b>total nacional</b> de cada cognom ≥20 a Espanya → la <b>llista</b> de partida
+    (${D.all.n_surnames.toLocaleString('ca')} cognoms presents a Mallorca); (b) la <b>taxa per província</b>
+    (<code>mapaWidget&amp;tipo=1</code>) → l'eix d'origen (Catalunya, Balears, País Valencià); (c) la <b>taxa per
+    municipi</b> (<code>mapaWidget&amp;vista=muni</code>) → reconstrucció dels <b>recomptes municipals</b>
+    (taxa‰ × padró, ≥5 per poble; reconstrucció exacta, la taxa‰ surt d'aquest mateix padró) sobre els quals es
+    calcula <b>tota l'anàlisi</b> (isonímia, endemisme, composició i navegador). Població: <b>padró INE</b>
+    (operació 22, taula 2860). Coordenades: NGIB.</p>
+    <p class="hint" style="color:var(--muted)">L'origen ve tot de l'API de l'INE per província: una sola font,
+    sense el soroll de fonts heterogènies, i amb el recompte complet rescata cognoms que una llista truncada
+    undercomptaria (Muntaner, Pomar).</p>
 
     <h3>2. Dos eixos: endemisme i origen</h3>
     <p><b>Endemisme</b> (per a la isonímia): <code>LQ = (freq_Mallorca/pob)/(freq_Espanya/pob)</code>.
@@ -647,20 +649,20 @@ function buildMethod(){
     <p><b>Resultat:</b> amb tots els cognoms el Mantel és nul (r=${D.all.mantel.r}); amb els endèmics,
     <b>r=${D.auto.mantel.r}, p=${D.auto.mantel.p}</b>. El filtre revela una estructura geogràfica que la capa
     ubiqua amagava.</p>
-    <p>Calculat sobre els <b>recomptes municipals de l'INE</b> (≥5 per poble), no el top-50: el senyal és més
-    suau (0,38→${D.auto.mantel.r}) però igualment robust.</p>
+    <p>Calculat sobre els <b>recomptes municipals de l'INE</b> (≥5 per poble) i el <b>cens complet</b>
+    (${D.all.n_surnames.toLocaleString('ca')} cognoms): sense biaix de truncació, el senyal és robust.</p>
 
     <h3>4. Límits honestos (importants)</h3>
     <ul>
-      <li><b>Tot sobre el recompte municipal de l'INE, no el top-50.</b> La isonímia, l'endemisme, la composició
-      per municipi i el navegador es calculen sobre els recomptes reconstruïts de l'INE (taxa‰ × població del
-      municipi, cada poble amb ≥5 portadors; validat a ±1 vs IBESTAT), que treuen el biaix de truncació del
-      top-50. IBESTAT només aporta la <b>llista</b> de 442 cognoms (top-50/municipi) i el padró. Límits que
-      queden: el secret estadístic amaga &lt;5 per poble (cobertura
-      ${Math.round(Math.min(...cov)*100)}%–${Math.round(Math.max(...cov)*100)}%), i la llista de partida no
-      enumera els endèmics que no arriben a cap top-50 (l'INE és cerca per cognom, no enumeració).</li>
+      <li><b>Tot sobre el recompte municipal de l'INE.</b> La isonímia, l'endemisme, la composició
+      per municipi i el navegador es calculen sobre els recomptes reconstruïts de l'INE (taxa‰ × padró del
+      municipi, cada poble amb ≥5 portadors; reconstrucció exacta), sense cap biaix de truncació. La llista de
+      partida és el <b>cens nacional de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')} cognoms ≥20 a Espanya
+      presents a Mallorca) i el padró. Límits que queden: el secret estadístic amaga &lt;5 per poble (cobertura
+      ${Math.round(Math.min(...cov)*100)}%–${Math.round(Math.max(...cov)*100)}%), i la cua &lt;20 a Espanya queda
+      fora del cens de partida (≈27% de la població).</li>
       <li><b>Origen: residu.</b> Amb el recompte provincial complet de l'INE el gruix queda ben classificat
-      —fins els que abans queien a «castellà» per la truncació top-50 (Muntaner, Pomar) ara surten català. El que
+      —fins els que en recomptes truncats haurien caigut a «castellà» (Muntaner, Pomar) ara surten català. El que
       <b>no</b> es fa: detecció de l'estrat
       andalusí/mossàrab, ni alguns fronterers (Beltran, Colomar).</li>
       <li><b>Endemisme:</b> marca com a endèmica la <b>immigració recent concentrada</b> (marroquins) → filtrat
@@ -670,13 +672,13 @@ function buildMethod(){
 
     <h3>5. Veredicte preliminar</h3>
     <p>El mètode <b>funciona</b> per a una avaluació exploratòria: amb dades obertes i sense inventar res,
-    aïlla l'estoc autòcton i en revela l'estructura geogràfica (r≈${D.auto.mantel.r}). Els límits (llista de
-    partida top-50, secret &lt;5, contaminació d'immigració recent) són reals i s'han de mantenir a la vista.</p>
-    <p class="src">Fonts: IBESTAT (cognoms per municipi, dades obertes) · INE — API de cognoms (operació APEL:
-    total nacional + taxa per província) · NGIB/IDEIB (coords) ·
+    aïlla l'estoc autòcton i en revela l'estructura geogràfica (r≈${D.auto.mantel.r}). Els límits (cens de partida
+    = cognoms ≥20 a Espanya, secret &lt;5, contaminació d'immigració recent) són reals i s'han de mantenir a la vista.</p>
+    <p class="src">Fonts: INE — API de cognoms (operació APEL: total nacional + taxa per província + taxa per
+    municipi) · INE — padró (operació 22, taula 2860) · NGIB/IDEIB (coords) ·
     OpenStreetMap · Leaflet. Exploració — no integrada al projecte principal.</p>
     <p class="src"><b>Atribució INE (obligatòria):</b> «Elaboración propia con datos extraídos del sitio web del
-    INE: www.ine.es». Dades d'IBESTAT reutilitzades segons el seu avís legal.</p>`;
+    INE: www.ine.es».</p>`;
 }
 
 function wireTabs(){
