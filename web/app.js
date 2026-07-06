@@ -184,116 +184,123 @@ function buildMunis(){
 
 // --- conclusions (computed live from the data) ----------------------------
 function buildConclusions(){
-  const a=D.all.mantel, u=D.auto.mantel, E=D.endemism;
-  const munis=Object.entries(D.muni_stats).map(([m,s])=>({m,au:s.autoch,pop:D.municipality_pop[m]}));
-  const byAuto=[...munis].sort((x,y)=>y.au-x.au);
-  const topAuto=byAuto.slice(0,5), lowAuto=byAuto.slice(-5).reverse();
+  const a=D.all.mantel, u=D.auto.mantel, ne=D.nonend.mantel, E=D.endemism;
+  const MST=D.muni_stats, POP=D.municipality_pop, CO=D.coords, R=D.auto.Rii;
+  const munis=Object.entries(MST).map(([m,s])=>({m,au:s.autoch,pop:POP[m]}));
   const totPop=munis.reduce((s,x)=>s+x.pop,0);
   const meanAuto=munis.reduce((s,x)=>s+x.au*x.pop,0)/totPop;
-  const nEnd=D.auto.n_surnames;                                    // Mallorca-endemic (isonymy filter)
   const nCat=Object.values(E).filter(e=>e.origin==="català").length;
   const nCast=Object.values(E).filter(e=>e.origin==="castellà").length;
   const cov=Object.values(D.coverage);
+  const pc=x=>Math.round(x*100)+"%";
+  const n2=x=>x.toFixed(2).replace('.',',');
+  const cap=s=>s.charAt(0)+s.slice(1).toLowerCase().replace(/_/g,' ');
   const sensRows=D.lq_sensitivity.map(r=>`<tr${r.p<0.05?' style="color:#8fd6ac"':''}><td class="num">≥ ${r.lq}</td>`+
     `<td class="num">${r.n_surnames}</td><td class="num">${r.r}</td><td class="num">${r.p}${r.p<0.05?' ✓':''}</td></tr>`).join("");
-  const lq=n=>E[n]?E[n].lq:null;
-  const csc=n=>E[n]?E[n].cat_score:null;
-  const catEx=["FERRER","NEBOT","VIDAL","BONET","MOLL","FUSTER","AMENGUAL"].filter(s=>E[s]);
-  const casEx=["GARCIA","MARTINEZ","LOPEZ","FERNANDEZ","GONZALEZ","SANCHEZ"].filter(s=>E[s]);
-  const pc=x=>Math.round(x*100)+"%";
-  const arow=r=>`<tr><td>${r.m}</td><td class="num" data-v="${r.pop}">${r.pop.toLocaleString('ca')}</td><td class="num" data-v="${r.au}">${pc(r.au)}</td></tr>`;
+  // --- the real driver: town SIZE, not distance to Palma ---
+  const km=(p,q)=>Math.hypot((p[0]-q[0])*111,(p[1]-q[1])*85), pal=CO.Palma;
+  const corr=ps=>{const n=ps.length,mx=ps.reduce((s,p)=>s+p[0],0)/n,my=ps.reduce((s,p)=>s+p[1],0)/n;
+    let c=0,sx=0,sy=0;for(const[x,y]of ps){c+=(x-mx)*(y-my);sx+=(x-mx)**2;sy+=(y-my)**2;}return c/Math.sqrt(sx*sy);};
+  const cr=Object.keys(MST).filter(m=>CO[m]&&POP[m]>0).map(m=>({au:MST[m].autoch,lp:Math.log(POP[m]),d:km(CO[m],pal),rii:R[m]}));
+  const cAuPop=corr(cr.map(r=>[r.au,r.lp])), cAuDist=corr(cr.map(r=>[r.au,r.d])), cRiiPop=corr(cr.filter(r=>r.rii).map(r=>[r.rii,r.lp]));
+  const T=m=>({au:pc(MST[m].autoch),pop:POP[m].toLocaleString('ca'),d:Math.round(km(CO[m],pal))});
+  const bany=T('Banyalbufar'), calv=T('Calvià'), palm=T('Palma');
+  const endog=Object.entries(R).sort((x,y)=>y[1]-x[1]).slice(0,5).map(([m])=>m).join(', ');
+  // --- most Mallorcan surnames: share = % of all Spanish bearers who live in Mallorca ---
+  const foreign=new Set(["magrebí","subsaharià","asiàtic","europeu","sense classificar"]);
+  const mostMall=Object.entries(E).filter(([s,e])=>e.spain&&e.mall>=300&&!foreign.has(e.origin))
+    .map(([s,e])=>({s,share:e.mall/e.spain})).sort((x,y)=>y.share-x.share).slice(0,10);
+  // --- surname monopolies: town's most common first surname as a share of its population ---
+  const mono=Object.entries(MST).filter(([m,s])=>s.top&&s.top.length)
+    .map(([m,s])=>({m,sn:s.top[0][0],pct:s.top[0][2]/10})).sort((x,y)=>y.pct-x.pct).slice(0,8);
+  // --- 20th-century immigration map: origin composition extremes ---
+  const MO=D.muni_origin;
+  const mostCat=Object.entries(MO).sort((x,y)=>(y[1]["català"]||0)-(x[1]["català"]||0)).slice(0,5);
+  const mostCast=Object.entries(MO).sort((x,y)=>(y[1]["castellà"]||0)-(x[1]["castellà"]||0)).slice(0,5);
 
   document.getElementById("concl-body").innerHTML = `
   <h2>Conclusions</h2>
-  <p class="lead">Instantània de 2025 (cens de cognoms de l'INE), ${D.n_municipalities} municipis, ${totPop.toLocaleString('ca')}
-  persones, amb els seus propis límits (secret &lt;5 per poble; la llista ve del cens nacional de l'INE, cognoms ≥20 a Espanya). Aquestes
-  són les conclusions que aguanten els números.</p>
+  <p class="lead">Els cognoms de Mallorca semblen <b>homogenis</b> —García, Martínez a tot arreu—, com si no hi
+  hagués res a dir. És una <b>màscara</b>. Treu l'estrat d'immigració compartit i, a sota, reapareix una
+  <b>geografia de fa segles</b>. Instantània 2025 (cens de cognoms de l'INE), ${D.n_municipalities} municipis,
+  ${totPop.toLocaleString('ca')} persones. Aquestes són les conclusions que aguanten els números.</p>
 
-  <h3>1. El filtre d'endemisme converteix un resultat nul en un senyal fort</h3>
-  <p>Aïllament per distància (Mantel) sobre els mateixos ${a.n} municipis:</p>
+  <h3>1. El filtre destapa una geografia amagada</h3>
+  <p>Aïllament per distància (Mantel): els pobles <b>a prop en km</b> tenen també cognoms més semblants? Sobre
+  els mateixos ${a.n} municipis:</p>
   <table><thead><tr><th>cognoms usats</th><th class="num">r</th><th class="num">p</th></tr></thead><tbody>
     <tr><td>Tots els cognoms</td><td class="num">${a.r}</td><td class="num">${a.p} <span class="ns">nul</span></td></tr>
     <tr style="color:#8fd6ac"><td>Només autòctons (LQ≥${D.lq_bands.auto})</td><td class="num">${u.r}</td><td class="num">${u.p} ✓</td></tr>
   </tbody></table>
-  <p class="result-box">Amb <b>tots</b> els cognoms el senyal és <b>nul</b> (r=${a.r}): els cognoms ubics
-  (García, Martínez…) igualen tots els municipis. En aïllar l'estoc <b>autòcton</b>, apareix
-  <b>r=${u.r}, p=${u.p}</b> — aïllament per distància clar i <b>significatiu</b>. El filtre no crea el senyal:
-  el <b>destapa</b> traient la capa que l'amagava.</p>
-  <p><b>Sensibilitat del llindar</b> (per no dependre d'un tall arbitrari): definint «autòcton» com a
-  LQ ≥ T, per a qualsevol T raonable el senyal es manté —fins i tot <b>puja</b> com més endèmic:</p>
+  <p class="result-box">Amb <b>tots</b> els cognoms, <b>res</b> (r=${a.r}): els ubics (García, Martínez…) igualen
+  tots els pobles. Aïllant el fons <b>autòcton</b> apareix <b>r=${u.r}, p=${u.p}</b> — aïllament per distància
+  clar i significatiu. El filtre no crea el senyal: el <b>destapa</b> traient l'estrat que l'amagava. I no depèn
+  del tall triat —a qualsevol llindar raonable es manté o puja:</p>
   <table><thead><tr><th class="num">LQ ≥</th><th class="num">cognoms</th><th class="num">r</th><th class="num">p</th></tr></thead>
     <tbody>${sensRows}</tbody></table>
-  <p class="hint" style="color:var(--muted)">La conclusió <b>no</b> depèn del llindar triat: r≈0,29–0,32, p≤0,001 a tot arreu
-  (sobre els recomptes municipals complets de l'INE).</p>
 
-  <h3>2. Mallorca són dues capes superposades (comprovat)</h3>
-  <p>El paisatge de 2025 és la suma d'una <b>capa no endèmica</b> (cognoms ubics: immigració castellana
-  del s. XX <i>més</i> cognoms catalans escampats per tot Espanya) i un <b>estoc autòcton</b> concentrat a
-  l'illa. <b>Ho hem verificat amb un arbre d'isonímia de la capa no endèmica a part</b>
-  (pestanya Isonímia): dona <b>Mantel r=${D.nonend.mantel.r}, p=${D.nonend.mantel.p}</b> →
-  <b>cap aïllament per distància</b>. Matís honest: <b>no</b> vol dir «repartit uniformement» —de fet es
-  concentren a Palma/costa—, sinó que la seva variació és un <b>gradient centre-perifèria</b>, no una
-  estructura geogràfica fina. Concretament (amb la cobertura completa de l'INE): <b>Garcia</b> surt a
-  ${D.by_surname.GARCIA.length}/${D.n_municipalities} municipis amb <b>taxa plana</b> (~20‰ pertot);
-  <b>Cañellas</b> també apareix a molts pobles (${D.by_surname.CANIELLAS.length}), però amb la <b>massa
-  concentrada per taxa</b> en uns pocs (Santa Eugènia ~28‰, Santa Maria ~17‰, enfront de ~1,6‰ a Palma).
-  Els autòctons són <b>grumollosos per taxa</b> → creen geografia; els ubics, plans → la dilueixen.
-  Autoctonia mitjana (ponderada per població): <b>${pc(meanAuto)}</b>. El gradient és net:</p>
+  <h3>2. El que mana és la MIDA del poble, no la distància a Palma</h3>
+  <p>El marc fàcil seria «interior vs Palma». Els números diuen una altra cosa: el que prediu l'autoctonia d'un
+  poble és <b>com de gran és</b>, no com de lluny és de la capital.</p>
+  <ul>
+    <li>autoctonia ↔ <b>mida (població)</b>: correlació <b>${n2(cAuPop)}</b> — fortíssima.</li>
+    <li>autoctonia ↔ <b>distància a Palma</b>: correlació <b>${n2(cAuDist)}</b> — pràcticament nul·la.</li>
+  </ul>
+  <p class="result-box"><b>Banyalbufar</b> (${bany.pop} hab., a ${bany.d} km de Palma) és <b>${bany.au}</b>
+  autòcton; <b>Calvià</b> (${calv.pop} hab., a només ${calv.d} km) és <b>${calv.au}</b>. Mateixa distància, món
+  oposat: no és la geografia, és que la <b>immigració del s. XX va anar als pobles grans i turístics</b> (Palma
+  mateix: ${palm.au}). L'<b>endogàmia</b> segueix la mateixa llei —com més petit el poble, més tancat (Rii ↔
+  mida: ${n2(cRiiPop)})—: els més endogàmics són pobles petits de l'interior (${endog}); els més barrejats,
+  Palma i Calvià.</p>
+  <p><b>Per què.</b> <b>Garcia</b> surt a ${D.by_surname.GARCIA.length}/${D.n_municipalities} pobles amb <b>taxa
+  plana</b> (~20‰ pertot) → dilueix la geografia; <b>Cañellas</b> té la massa <b>concentrada</b> en pocs (Santa
+  Eugènia ~28‰ vs ~1,6‰ a Palma) → la crea. Els autòctons són grumollosos; els ubics, plans. Autoctonia mitjana
+  ponderada per població: <b>${pc(meanAuto)}</b>.</p>
+  <p class="hint" style="color:var(--muted)">Comprovat a part: l'arbre d'isonímia de l'estrat <b>no endèmic</b>
+  dona r=${ne.r}, p=${ne.p} → cap estructura per distància. La geografia viu <b>només</b> a el fons autòcton.</p>
+
+  <h3>3. Els cognoms més mallorquins, i els pobles que en són «capital»</h3>
+  <p><b>Els més exclusivament mallorquins</b> — quin % de tots els portadors d'Espanya viuen a Mallorca:</p>
+  <p style="line-height:2.1">${mostMall.map(x=>`<span class="pill" style="border-color:${oc('català')};color:var(--ink)">${cap(x.s)} <b>${Math.round(x.share*100)}%</b></span>`).join(" ")}</p>
+  <p class="hint" style="color:var(--muted)">Concentrats desenes de vegades més a l'illa que la mitjana espanyola:
+  gairebé no existeixen fora de Mallorca.</p>
+  <p><b>Monopolis de cognom</b> — pobles on un sol llinatge domina la població:</p>
   <div class="two">
-    <div><table><thead><tr><th>Més autòctons</th><th class="num">pob.</th><th class="num">aut.</th></tr></thead>
-      <tbody>${topAuto.map(arow).join("")}</tbody></table></div>
-    <div><table><thead><tr><th>Menys autòctons</th><th class="num">pob.</th><th class="num">aut.</th></tr></thead>
-      <tbody>${lowAuto.map(arow).join("")}</tbody></table></div>
+    <div><table><thead><tr><th>poble</th><th>cognom</th><th class="num">% pob.</th></tr></thead><tbody>
+      ${mono.map(x=>`<tr><td>${x.m}</td><td>${cap(x.sn)}</td><td class="num">${n2(x.pct)}%</td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="result-box" style="align-self:start">A <b>${mono[0].m}</b>, <b>1 de cada ${Math.round(100/mono[0].pct)}</b>
+    persones porten el cognom <b>${cap(mono[0].sn)}</b> de primer. Aquests llinatges gairebé <i>són</i> el poble.</div>
   </div>
-  <p>És l'eix <b>interior autòcton</b> vs <b>Palma / costa turística</b> (immigrant): un gradient
-  centre-perifèria mesurat sobre centenars de milers de persones.</p>
 
-  <h3>3. Origen: català vs castellà per concentració al domini de parla catalana</h3>
-  <p>Dos eixos <b>diferents</b>: l'<b>endemisme</b> (concentració a Mallorca, seccions 1–3, mou la geografia) i
-  l'<b>origen</b> (eix <b>descriptiu</b>: no entra a la isonímia ni a cap estadística). Per a l'origen, en comptes
-  de mesurar concentració a Mallorca (que és endemisme), es mesura la concentració al <b>domini catalanoparlant
-  sencer</b>: un cognom és <b>català</b> si està sobrerepresentat a <b>Catalunya</b>, <b>Balears</b> <i>o</i> al
-  <b>País Valencià</b> respecte de la mitjana espanyola —tot des d'una <b>sola font</b>, l'<b>API de cognoms de
-  l'INE</b> (taxa per província). És una <b>aproximació de domini lingüístic</b> (on es concentra el cognom, no
-  d'on ve), que l'endemisme sol no donava:</p>
-  <ul>
-    <li><b style="color:${oc('català')}">Català</b> (${nCat} cognoms): ${catEx.map(s=>`${s.charAt(0)+s.slice(1).toLowerCase()} (${csc(s)})`).join(" · ")} — Principat (Ferrer, Nebot, Vidal), Balears (Amengual, Moll) i País Valencià (Miralles, Català, Gomis, Ballester).</li>
-    <li><b style="color:${oc('castellà')}">Castellà</b> (${nCast}): ${casEx.map(s=>`${s.charAt(0)+s.slice(1).toLowerCase()} (${csc(s)||lq(s)})`).join(" · ")} — a l'INE però <b>no</b> concentrats al domini català.</li>
-  </ul>
-  <p class="result-box">Casos que amb endemisme sol sortien mal etiquetats i <b>ara es corregeixen</b>:
-  <b>Fuster</b>, <b>Moll</b>, <b>Nebot</b> pel senyal de Catalunya/Balears; <b>Femenia</b>
-  (LQ Val ${csc('FEMENIA')&&D.endemism.FEMENIA?D.endemism.FEMENIA.lq_val:''}), <b>Miralles</b>, <b>Català</b>,
-  <b>Gomis</b> pel del País Valencià → tots <b>català</b>. I sobretot <b>Muntaner</b> i <b>Pomar</b>: el
-  recompte provincial de l'INE (LQ_Bal 28,8 i 12,5) mostra que <b>no</b> eren rars sinó fortament
-  balears → no cap «residu castellà».</p>
-  <p class="warn-box">⚠ <b>El País Valencià és sorollós:</b> cognom castellà sobrerepresentat per la repoblació
-  aragonesa (Navarro LQ_Val 2,3; Martínez 1,6). Per això s'hi aplica un llindar <b>més alt</b>
-  (LQ≥${D.lq_bands.val}) que a Catalunya/Balears (${D.lq_bands.origin}). <b>Residu real:</b> no hi ha detecció
-  de l'estrat andalusí/mossàrab (Bennàssar, Binimelis són català, no marcats com d'ètim àrab antic), i la capa
-  d'immigració recent depèn d'una llista curada (l'INE per nacionalitat només arriba al top-20 per país).</p>
+  <h3>4. El mapa de la immigració del segle XX</h3>
+  <p>La composició d'origen (descriptiva, per concentració) dibuixa net l'onada migratòria: els municipis
+  <b>costaners i turístics</b> són els més castellans; l'<b>interior</b>, els més catalans.</p>
+  <div class="two">
+    <div><table><thead><tr><th>Més català</th><th class="num">%&nbsp;cat</th></tr></thead><tbody>
+      ${mostCat.map(([m,c])=>`<tr><td>${m}</td><td class="num">${Math.round((c["català"]||0)*100)}%</td></tr>`).join("")}</tbody></table></div>
+    <div><table><thead><tr><th>Més castellà</th><th class="num">%&nbsp;cast</th></tr></thead><tbody>
+      ${mostCast.map(([m,c])=>`<tr><td>${m}</td><td class="num">${Math.round((c["castellà"]||0)*100)}%</td></tr>`).join("")}</tbody></table></div>
+  </div>
 
-  <h3>4. Límits honestos</h3>
-  <ul>
-    <li><b>Tota l'anàlisi va sobre els recomptes municipals de l'INE</b> (taxa‰ × padró, ≥5 per poble;
-    reconstrucció exacta, la taxa‰ de l'INE surt d'aquest mateix padró): isonímia, endemisme, composició i
-    navegador. La llista de cognoms és el <b>cens nacional de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')} cognoms ≥20 a
-    Espanya presents a Mallorca) i el padró. Límits: el secret amaga &lt;5 per poble (cobertura
-    ${pc(Math.min(...cov))}–${pc(Math.max(...cov))}, Palma la pitjor) i la cua &lt;20 a Espanya queda fora del
-    cens de partida. R<sub>ii</sub>/I<sub>ij</sub> dominades pel cap → aproximació defensable.</li>
-    <li><b>Instantània 2025</b>, no sèrie temporal.</li>
-    <li>Municipis &lt;400 hab. exclosos; cua &lt;5 suprimida (secret estadístic).</li>
-  </ul>
+  <h3>5. Origen: una aproximació descriptiva (no toca el resultat)</h3>
+  <p>L'eix català/castellà es construeix a part, en <b>3 capes</b> (mesura INE → marca de forà curada → proxy de
+  concentració) i <b>no entra a cap estadística</b> —la geografia de dalt va tota per endemisme. Per població:
+  <b>~${pc(D.origin_overall["català"])}</b> català · <b>~${pc(D.origin_overall["castellà"])}</b> castellà · la
+  resta forà o sense classificar. «Català» vol dir <b>on es concentra</b> el cognom, no d'on ve. El detall, a
+  les pestanyes <b>Origen</b> i <b>Metodologia</b>.</p>
 
-  <h3>5. Veredicte</h3>
+  <h3>6. Límits honestos</h3>
   <ul>
-    <li>Amb <b>dades obertes, sense lexicon i sense inventar res</b>, es pot aïllar l'estoc autòcton i
-    revelar-ne l'estructura geogràfica (r=${u.r}, p=${u.p}), <b>estadísticament robust</b> (centenars de
-    milers de persones).</li>
-    <li>El resultat interessant és el <b>contrast</b>: sense filtre, cap geografia; amb filtre, geografia clara.
-    Prova que la homogeneïtat aparent dels cognoms moderns és, en bona part, la <b>capa immigrant compartida</b>.</li>
-    <li>Els límits (cens de partida = cognoms ≥20 a Espanya, secret &lt;5 per poble,
-    contaminació d'immigració recent) s'han de mantenir a la vista i no permeten afirmacions demogràfiques
-    fortes, sinó una tendència ben fonamentada.</li>
+    <li><b>Tot sobre el recompte municipal de l'INE</b> (taxa‰ × padró, ≥5 per poble; reconstrucció exacta). La
+    llista de partida és el <b>cens nacional de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')} cognoms ≥20 a
+    Espanya presents a Mallorca). Límits: el secret amaga &lt;5 per poble (cobertura
+    ${pc(Math.min(...cov))}–${pc(Math.max(...cov))}, Palma la pitjor) i la cua &lt;20 a Espanya queda fora.
+    <b>Instantània 2025</b>, no sèrie temporal.</li>
+    <li>El resultat fort és el <b>contrast</b>: sense filtre cap geografia, amb filtre geografia clara —prova que
+    la homogeneïtat aparent és, en bona part, l'<b>estrat immigrant compartit</b>. Tot amb dades obertes, sense
+    lexicon i sense inventar res.</li>
+    <li>Els límits són reals i no permeten afirmacions demogràfiques fortes, sinó una tendència ben fonamentada.</li>
   </ul>`;
 }
 
