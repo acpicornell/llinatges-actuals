@@ -52,7 +52,10 @@ they read `data/` and write `web/site_data/` relative to the repo root, so the i
   Mantel **r ≈ 0.30, p = 0.0001**; monotone and stable across LQ thresholds (0.30 → 0.33).
   The full and non-endemic sets show no such signal (r ≈ 0.04–0.07, ns) — the structure lives
   specifically in the island-concentrated stock.
-- **Origin by population:** ≈ **47 % català · 48 % castellà · 4.5 % foreign**.
+- **Origin by population:** ≈ **46 % català · 48 % castellà · 4.6 % foreign · 1.1 % undetermined**.
+  Rare surnames (< 100 national bearers) whose only Catalan signal is Balears concentration are left
+  **"sense classificar"** rather than called català: at that frequency Balears concentration is just
+  Mallorca endemism, not origin (it would otherwise mislabel the endemic-foreign tail as Catalan).
 - Endemic set = 997 surnames (LQ ≥ 1.3, ≥ 20 bearers, non-foreign).
 
 ## Caveats (kept in view)

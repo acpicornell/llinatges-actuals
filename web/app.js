@@ -62,6 +62,12 @@ function buildOrigin(){
     <b>Binimelis</b> o <b>Bibiloni</b>, d'ètim àrab però mallorquins <b>fa segles</b>, són —correctament— autòctons,
     <b>no</b> immigració recent.<br>⚠ <b>Orígens forans (${foreign.length}):</b> ${flist}. Detectats amb les llistes
     INE per nacionalitat <b>+ una llista curada</b> (l'INE només publica el top-20 per país). Encara
+    <div class="caveat">◻ <b>«Sense classificar» (${Object.values(D.endemism).filter(e=>e.origin==='sense classificar').length} cognoms, ~1% de la massa):</b>
+    cua de cognoms raríssims (&lt;${D.lq_bands.origin_floor} portadors a Espanya) l'única marca catalana dels quals és estar concentrats a
+    <b>Balears</b>. A aquesta freqüència, «concentrat a Balears» <b>no</b> és origen: és el mateix que endemisme a Mallorca (un cognom
+    amb 20 portadors gairebé tots a l'illa hi surt concentrat sigui quin sigui l'ètim). Sense un senyal <b>independent</b> de Catalunya o
+    País Valencià, no podem distingir un Garcies català d'un Ahabchi magrebí → honestament, <b>indeterminat</b>. Els castellans i els forans
+    coneguts no s'hi toquen.</div>
     <b>subestimats</b> (l'INE per nacionalitat només arriba al top-20 per país) i algun rar sense regió assignada (Nineb, Masaquiza queden per revisar).</div>
     <h3 class="osub">Composició per municipi (% de la massa de cognoms rastrejada, INE)</h3>
     <table><thead>${th}</thead><tbody>${rows}</tbody></table>`;
@@ -653,6 +659,13 @@ function buildMethod(){
     ubiqua amagava.</p>
     <p>Calculat sobre els <b>recomptes municipals de l'INE</b> (≥5 per poble) i el <b>cens complet</b>
     (${D.all.n_surnames.toLocaleString('ca')} cognoms): sense biaix de truncació, el senyal és robust.</p>
+    <p><b>Sense classificar (sostre de freqüència):</b> per sota de <b>${D.lq_bands.origin_floor} portadors a
+    Espanya</b>, l'LQ Balears és <b>col·lineal amb l'endemisme</b> —un cognom raríssim gairebé tot a Mallorca
+    hi surt concentrat per construcció, sigui quin sigui l'origen—, així que <b>no</b> el fem servir com a prova
+    d'origen. A baixa freqüència un cognom és <b>català</b> només amb un senyal <b>independent</b> de Catalunya
+    (LQ Cat) o País Valencià (LQ Val); si no, es marca <b>«sense classificar»</b> en comptes d'inventar una
+    etiqueta. Això treu de «català» la cua de forans endèmics (Ahabchi, Krich…) que la regla crua hi posava.
+    Els castellans i els forans coneguts no s'hi veuen afectats.</p>
 
     <h3>4. Límits honestos (importants)</h3>
     <ul>

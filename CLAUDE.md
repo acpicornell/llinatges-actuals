@@ -45,6 +45,13 @@ Read `README.md` first (sources + pipeline + results).
     gazetteer in `build_modern.py` for the rare recent-immigrant surnames the top-20 misses.
     The gazetteer EXCLUDES centuries-old Andalusi-Mallorcan stock (Bennàssar, Binimelis,
     Bibiloni). LQ measures endemism, NOT etymology.
+    - **Low-frequency origin floor (`ORIGIN_FLOOR = 100`).** Below 100 national bearers, LQ_Bal is
+      collinear with Mallorca endemism (a surname borne by ~20 people almost all in Mallorca is
+      Balears-concentrated by construction, whatever its etymology), so it is NOT trusted as origin
+      evidence: a rare surname is "català" only with an INDEPENDENT Catalonia (LQ_Cat) or Valencia
+      (LQ_Val) signal, else it is left **"sense classificar"**. This demotes the rare endemic-foreign
+      tail (Ahabchi, Krich…) the raw rule mislabelled "català"; genuine Castilian rare surnames and the
+      known-foreign screen are untouched. 649 surnames, ~1.1 % of population mass.
 
 ## Pipeline (INE → JSON → web)
 
@@ -66,7 +73,8 @@ Helpers: `src/muni_ids.py` (INE contour region-id → town), `src/screen_foreign
 
 - Isolation by distance holds for the autochthonous (Mallorca-endemic) surnames:
   Mantel **r ≈ 0.30, p = 0.0001**, stable across LQ thresholds; full/non-endemic sets ns.
-- Origin by population: **≈ 47 % català · 48 % castellà · 4.5 % foreign**.
+- Origin by population: **≈ 46 % català · 48 % castellà · 4.6 % foreign · 1.1 % sense classificar**
+  (the low-frequency floor left the rare undetermined tail out of "català").
 - Endemic set = 997 surnames (LQ ≥ 1.3, ≥ 20 bearers, non-foreign).
 
 ## Status / backlog

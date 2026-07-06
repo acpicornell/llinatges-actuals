@@ -213,13 +213,29 @@ def main():
     LQ_AUTO=1.3       # endemism cutoff for the ISONYMY filter: >= -> Mallorca-endemic
     T_ORIGIN=1.5      # origin cutoff on the CLEAN anchors (Catalonia/Balears/Mallorca)
     T_VAL=5.0         # origin cutoff on the NOISY Valencia signal (higher, to exclude Garcia/Martinez)
+    # Below ORIGIN_FLOOR national bearers, LQ_Bal (and LQ_Mall) collapse into Mallorca ENDEMISM
+    # rather than measuring origin: a surname borne by only a handful of people, nearly all in
+    # Mallorca, is Balears-concentrated BY CONSTRUCTION whatever its etymology (Maghrebi, spelling
+    # variant, whatever). That is exactly why the raw rule labels the whole rare tail "català".
+    # So at low frequency the Balears/Mallorca route to "català" is not trusted: an INDEPENDENT
+    # Catalonia (lq_cat) or Valencia (lq_val) signal is required; otherwise origin is left
+    # undetermined ("sense classificar"). Genuinely Castilian rare surnames (not Catalan-domain
+    # concentrated) are unaffected and still fall through to "castellà".
+    ORIGIN_FLOOR=100
     FOREIGN_LABELS={"magrebí","subsaharià","asiàtic","europeu"}
     oref=load_origin_ref()
     for lab,names in FOREIGN_MANUAL.items():          # hand-verified extension (beyond INE's top-20)
         for s in names: oref.setdefault(s,lab)
+    def indep_catalan(e):     # Catalan signal INDEPENDENT of Mallorca/Balears endemism
+        return (e["lq_cat"] is not None and e["lq_cat"]>=T_ORIGIN) or \
+               (e["lq_val"] is not None and e["lq_val"]>=T_VAL)
     def origin_of(s):
         e=endem[s]; cs=e["cat_score"]; lv=e["lq_val"]
         if s in oref: return oref[s]                  # 1) foreign immigrant (nationality lists + gazetteer)
+        low = e["spain"] is not None and e["spain"]<ORIGIN_FLOOR
+        if low and cs is not None and cs>=T_ORIGIN and not indep_catalan(e):
+            return "sense classificar"                # 2') rare tail: "català" only via Balears/Mallorca
+                                                      #     concentration = endemism, not origin -> undetermined
         if cs is not None and cs>=T_ORIGIN: return "català"   # 2) Catalan-domain (Principat/Balears/Mallorca)
         if lv is not None and lv>=T_VAL:   return "català"    # 2b) strongly Valencian (noisy source, high bar)
         if e["spain"]: return "castellà"              # 3) in INE national, not Catalan-concentrated
@@ -366,7 +382,7 @@ def main():
          "origins":ORIGINS,"origin_overall":overall,"muni_origin":muni_origin,
          "by_surname":by_surname,
          "n_municipalities":len(munis),"pop_mallorca_covered":pop_mall,
-         "lq_bands":{"auto":LQ_AUTO,"origin":T_ORIGIN,"val":T_VAL,"mass":MASS_FLOOR},
+         "lq_bands":{"auto":LQ_AUTO,"origin":T_ORIGIN,"val":T_VAL,"mass":MASS_FLOOR,"origin_floor":ORIGIN_FLOOR},
          "lq_sensitivity":lq_sensitivity,
          "municipality_pop":{name[c]:pop[c] for c in munis},
          "coords":{name[c]:coords.get(name[c]) for c in munis},
