@@ -56,19 +56,18 @@ function buildOrigin(){
     per la repoblació aragonesa i la immigració hi ha cognom castellà sobrerepresentat (Navarro LQ_Val 2,3;
     Martínez 1,6). Per això el llindar valencià és <b>més alt</b> (LQ≥${D.lq_bands.val}, no ${D.lq_bands.origin}):
     rescata els valencians de debò (Femenia, Miralles, Català, Gomis…) sense deixar passar García ni Navarro.
-    <br>✓ <b>El recompte provincial complet de l'INE arregla els antics residus:</b> <b>Muntaner</b> i <b>Pomar</b>,
-    que en una llista truncada per municipi semblarien rars i castellans, tenen de fet LQ_Bal altíssim (28,8 i 12,5)
-    → ara <b>català</b> correctament. No detecta l'estrat andalusí/mossàrab: cognoms com <b>Bennàssar</b>,
+    <br>✓ <b>El recompte provincial de l'INE situa bé Muntaner i Pomar:</b> tot i semblar rars i castellans,
+    tenen de fet LQ_Bal altíssim (28,8 i 12,5) → <b>català</b> correctament. No detecta l'estrat andalusí/mossàrab: cognoms com <b>Bennàssar</b>,
     <b>Binimelis</b> o <b>Bibiloni</b>, d'ètim àrab però mallorquins <b>fa segles</b>, són —correctament— autòctons,
     <b>no</b> immigració recent.<br>⚠ <b>Orígens forans (${foreign.length}):</b> ${flist}. Detectats amb les llistes
     INE per nacionalitat <b>+ una llista curada</b> (l'INE només publica el top-20 per país). Encara
+    <b>subestimats</b> (l'INE per nacionalitat només arriba al top-20 per país) i algun rar sense regió assignada (Nineb, Masaquiza queden per revisar).</div>
     <div class="caveat">◻ <b>«Sense classificar» (${Object.values(D.endemism).filter(e=>e.origin==='sense classificar').length} cognoms, ~1% de la massa):</b>
     cua de cognoms raríssims (&lt;${D.lq_bands.origin_floor} portadors a Espanya) l'única marca catalana dels quals és estar concentrats a
     <b>Balears</b>. A aquesta freqüència, «concentrat a Balears» <b>no</b> és origen: és el mateix que endemisme a Mallorca (un cognom
     amb 20 portadors gairebé tots a l'illa hi surt concentrat sigui quin sigui l'ètim). Sense un senyal <b>independent</b> de Catalunya o
     País Valencià, no podem distingir un Garcies català d'un Ahabchi magrebí → honestament, <b>indeterminat</b>. Els castellans i els forans
     coneguts no s'hi toquen.</div>
-    <b>subestimats</b> (l'INE per nacionalitat només arriba al top-20 per país) i algun rar sense regió assignada (Nineb, Masaquiza queden per revisar).</div>
     <h3 class="osub">Composició per municipi (% de la massa de cognoms rastrejada, INE)</h3>
     <table><thead>${th}</thead><tbody>${rows}</tbody></table>`;
 }
@@ -235,8 +234,8 @@ function buildConclusions(){
   <b>Fuster</b>, <b>Moll</b>, <b>Nebot</b> pel senyal de Catalunya/Balears; <b>Femenia</b>
   (LQ Val ${csc('FEMENIA')&&D.endemism.FEMENIA?D.endemism.FEMENIA.lq_val:''}), <b>Miralles</b>, <b>Català</b>,
   <b>Gomis</b> pel del País Valencià → tots <b>català</b>. I sobretot <b>Muntaner</b> i <b>Pomar</b>: el
-  recompte provincial complet de l'INE (LQ_Bal 28,8 i 12,5) mostra que <b>no</b> eren rars sinó fortament
-  balears → deixen de ser el «residu castellà» que serien en una llista truncada per municipi.</p>
+  recompte provincial de l'INE (LQ_Bal 28,8 i 12,5) mostra que <b>no</b> eren rars sinó fortament
+  balears → no cap «residu castellà».</p>
   <p class="warn-box">⚠ <b>El País Valencià és sorollós:</b> cognom castellà sobrerepresentat per la repoblació
   aragonesa (Navarro LQ_Val 2,3; Martínez 1,6). Per això s'hi aplica un llindar <b>més alt</b>
   (LQ≥${D.lq_bands.val}) que a Catalunya/Balears (${D.lq_bands.origin}). <b>Residu real:</b> no hi ha detecció
@@ -392,20 +391,32 @@ function buildEndem(){
         <td style="color:${oc(r.origin)}">${r.origin}</td></tr>`).join("")+`</tbody></table>`;
   }
   el.innerHTML = `
-    <p><b>Dos eixos.</b> <b>Endemisme</b> = <code>LQ Mall = (freq Mallorca/pob)/(freq Espanya/pob)</code>
-    (concentració a l'illa; mou la geografia). <b>Origen</b> = concentració al <b>domini catalanoparlant</b>:
-    <b>LQ Cat</b> (Catalunya), <b>LQ Bal</b> (Balears) i <b>LQ Val</b> (País Valencià), totes des de l'<b>API de
-    cognoms de l'INE</b> (taxa per província). Un cognom és
-    <span style="color:var(--accent)">català</span> si LQ Cat o LQ Bal ≥ ${D.lq_bands.origin}, <b>o</b> LQ Val ≥
-    ${D.lq_bands.val} (llindar valencià més alt: el País Valencià té molt cognom castellà);
-    <span style="color:var(--cast)">castellà</span> si surt a l'INE però a cap. Ordenat per LQ Mall.</p>
+    <p><b>Dos eixos diferents</b>, un per columna de la taula:</p>
+    <div class="two" style="margin-bottom:12px">
+      <div class="concept">
+        <h4>Endemisme — mou la geografia</h4>
+        <p><code>LQ Mall = (freq Mallorca / pob) / (freq Espanya / pob)</code></p>
+        <p class="imp">Com de concentrat és el cognom a <b>l'illa</b> respecte d'Espanya. És l'eix que
+        <b>ordena aquesta taula</b>.</p>
+      </div>
+      <div class="concept">
+        <h4>Origen — català vs castellà</h4>
+        <p>Concentració al <b>domini catalanoparlant</b>: <b>LQ Cat</b> (Catalunya), <b>LQ Bal</b> (Balears) i
+        <b>LQ Val</b> (País Valencià), totes des de l'<b>API de cognoms de l'INE</b> (taxa per província).</p>
+      </div>
+    </div>
+    <p class="hint" style="color:var(--muted)">Classificació d'origen: un cognom és
+    <b style="color:var(--accent)">català</b> si <b>LQ Cat</b> o <b>LQ Bal ≥ ${D.lq_bands.origin}</b>,
+    <b>o LQ Val ≥ ${D.lq_bands.val}</b> (llindar valencià més alt perquè el País Valencià té molt cognom
+    castellà); <b style="color:var(--cast)">castellà</b> si surt a l'INE però no es concentra enlloc.
+    Taula ordenada per LQ Mall.</p>
     <div class="caveat">⚠ Fixa't com l'origen <b>no</b> és l'endemisme: mesuren coses diferents. L'<b>origen</b>
     mira la concentració al domini català sencer (Principat/Balears/País Valencià): <b>Nebot</b> surt català
     sobretot per LQ Val 33; <b>Femenia/Miralles</b> per LQ Val altíssim tot i tenir LQ Cat baix. L'<b>endemisme</b>
     mira només Mallorca: <b>Muntaner</b> i <b>Pomar</b> hi són massissament concentrats (LQ Bal 28,8 i 12,5) —el
-    recompte complet de l'INE els rescata, que en una llista truncada semblarien rars. I els dos eixos <b>divergeixen</b>:
+    recompte complet de l'INE els situa bé. I els dos eixos <b>divergeixen</b>:
     <b>El Khoumssi</b> té LQ Mall altíssim (Mallorca-endèmic) però <b>no</b> és català sinó magrebí → per això
-    l'endemisme sol no basta i cal el filtre d'origen + forans.<br>
+    l'endemisme sol no basta i cal el filtre d'origen + forans.<br><br>
     ⚠ <b>Cognoms d'immigració recent</b> (Ayoubi, Bouhjira, El Khoumssi…) són, per freqüència, idèntics a un
     mallorquí endèmic (LQ Mall alt, absents de Catalunya). Es marquen <b>magrebí</b> amb una llista curada
     (l'INE per nacionalitat només en publica el top-20); <b>no</b> es confonen amb els d'ètim andalusí ja
@@ -534,8 +545,7 @@ function buildIso(){
     peninsular escampat, no un estrat «castellà» pur. Fulles acolorides per autoctonia del municipi.
     R<sub>ii</sub>/distàncies es calculen sobre els <b>recomptes municipals de l'INE</b> (taxa‰ × padró
     del municipi, cada poble amb ≥5 portadors) i sobre el <b>cens complet de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')}
-    cognoms), no una llista truncada per municipi: així no hi ha biaix de truncació que infli el contrast entre
-    pobles ni infravalori les viles grans. El Mantel dels autòctons queda en <b>${u.r}</b>, significatiu.
+    cognoms). El Mantel dels autòctons queda en <b>${u.r}</b>, significatiu.
     Límit que queda: el secret estadístic amaga &lt;5 per poble.</div>`;
 }
 
@@ -630,8 +640,7 @@ function buildMethod(){
     calcula <b>tota l'anàlisi</b> (isonímia, endemisme, composició i navegador). Població: <b>padró INE</b>
     (operació 22, taula 2860). Coordenades: NGIB.</p>
     <p class="hint" style="color:var(--muted)">L'origen ve tot de l'API de l'INE per província: una sola font,
-    sense el soroll de fonts heterogènies, i amb el recompte complet rescata cognoms que una llista truncada
-    infracomptaria (Muntaner, Pomar).</p>
+    sense el soroll de fonts heterogènies; el recompte complet capta bé cognoms com Muntaner i Pomar.</p>
 
     <h3>2. Dos eixos: endemisme i origen</h3>
     <p><b>Endemisme</b> (per a la isonímia): <code>LQ = (freq_Mallorca/pob)/(freq_Espanya/pob)</code>.
@@ -650,15 +659,6 @@ function buildMethod(){
     Catalunya— la classificació per LQ etiquetaria erròniament com a «català». S'exclouen d'aquesta llista els
     cognoms d'ètim andalusí <b>establerts fa segles</b> (Bennàssar, Binimelis): són estoc autòcton, no arribada
     recent.</p>
-
-    <h3>3. Isonímia</h3>
-    <p>S'aplica sobre el filtre d'<b>endemisme</b> (no d'origen: la geografia interna de Mallorca ve dels
-    cognoms concentrats a l'illa). Es comparen tots els cognoms amb el subconjunt endèmic (LQ≥${D.lq_bands.auto}).</p>
-    <p><b>Resultat:</b> amb tots els cognoms el Mantel és nul (r=${D.all.mantel.r}); amb els endèmics,
-    <b>r=${D.auto.mantel.r}, p=${D.auto.mantel.p}</b>. El filtre revela una estructura geogràfica que la capa
-    ubiqua amagava.</p>
-    <p>Calculat sobre els <b>recomptes municipals de l'INE</b> (≥5 per poble) i el <b>cens complet</b>
-    (${D.all.n_surnames.toLocaleString('ca')} cognoms): sense biaix de truncació, el senyal és robust.</p>
     <p><b>Sense classificar (sostre de freqüència):</b> per sota de <b>${D.lq_bands.origin_floor} portadors a
     Espanya</b>, l'LQ Balears és <b>col·lineal amb l'endemisme</b> —un cognom raríssim gairebé tot a Mallorca
     hi surt concentrat per construcció, sigui quin sigui l'origen—, així que <b>no</b> el fem servir com a prova
@@ -667,17 +667,26 @@ function buildMethod(){
     etiqueta. Això treu de «català» la cua de forans endèmics (Ahabchi, Krich…) que la regla crua hi posava.
     Els castellans i els forans coneguts no s'hi veuen afectats.</p>
 
+    <h3>3. Isonímia</h3>
+    <p>S'aplica sobre el filtre d'<b>endemisme</b> (no d'origen: la geografia interna de Mallorca ve dels
+    cognoms concentrats a l'illa). Es comparen tots els cognoms amb el subconjunt endèmic (LQ≥${D.lq_bands.auto}).</p>
+    <p><b>Resultat:</b> amb tots els cognoms el Mantel és nul (r=${D.all.mantel.r}); amb els endèmics,
+    <b>r=${D.auto.mantel.r}, p=${D.auto.mantel.p}</b>. El filtre revela una estructura geogràfica que la capa
+    ubiqua amagava.</p>
+    <p>Calculat sobre els <b>recomptes municipals de l'INE</b> (≥5 per poble) i el <b>cens complet</b>
+    (${D.all.n_surnames.toLocaleString('ca')} cognoms): el senyal és robust.</p>
+
     <h3>4. Límits honestos (importants)</h3>
     <ul>
       <li><b>Tot sobre el recompte municipal de l'INE.</b> La isonímia, l'endemisme, la composició
       per municipi i el navegador es calculen sobre els recomptes reconstruïts de l'INE (taxa‰ × padró del
-      municipi, cada poble amb ≥5 portadors; reconstrucció exacta), sense cap biaix de truncació. La llista de
+      municipi, cada poble amb ≥5 portadors; reconstrucció exacta). La llista de
       partida és el <b>cens nacional de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')} cognoms ≥20 a Espanya
       presents a Mallorca) i el padró. Límits que queden: el secret estadístic amaga &lt;5 per poble (cobertura
       ${Math.round(Math.min(...cov)*100)}%–${Math.round(Math.max(...cov)*100)}%), i la cua &lt;20 a Espanya queda
       fora del cens de partida (≈27% de la població).</li>
-      <li><b>Origen: residu.</b> Amb el recompte provincial complet de l'INE el gruix queda ben classificat
-      —fins els que en recomptes truncats haurien caigut a «castellà» (Muntaner, Pomar) ara surten català. El que
+      <li><b>Origen: residu.</b> Amb el recompte provincial de l'INE el gruix queda ben classificat
+      —fins i tot Muntaner i Pomar surten català correctament. El que
       <b>no</b> es fa: detecció de l'estrat
       andalusí/mossàrab, ni alguns fronterers (Beltran, Colomar).</li>
       <li><b>Endemisme:</b> marca com a endèmica la <b>immigració recent concentrada</b> (marroquins) → filtrat
