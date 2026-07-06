@@ -2,7 +2,7 @@
 // EXPLORATION viewer — modern (INE census 2025) Mallorca surname isonymy.
 let D, MAP, MARKERS = {};
 
-fetch("site_data/modern_2025.json").then(r => r.json()).then(d => { D = d; init(); })
+fetch("site_data/modern_2025.json?_=" + Date.now()).then(r => r.json()).then(d => { D = d; init(); })
   .catch(e => { document.getElementById("map").innerHTML =
     '<p style="padding:20px">No s\'ha pogut carregar <code>site_data/modern_2025.json</code> — serveix la carpeta <code>web/</code> amb un servidor.</p>'; console.error(e); });
 

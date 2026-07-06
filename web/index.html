@@ -3,9 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Never serve a stale build while reviewing locally (this project is not deployed). -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Isonímia moderna — Mallorca 2025</title>
   <link rel="stylesheet" href="vendor/leaflet.css">
-  <link rel="stylesheet" href="style.css">
+  <!-- Cache-bust our own assets on every load; vendored Leaflet is stable, let it cache. -->
+  <script>document.write('<link rel="stylesheet" href="style.css?_='+Date.now()+'">')</script>
 </head>
 <body>
   <header>
@@ -66,6 +71,6 @@
   </main>
 
   <script src="vendor/leaflet.js"></script>
-  <script src="app.js"></script>
+  <script>document.write('<scr'+'ipt src="app.js?_='+Date.now()+'"></scr'+'ipt>')</script>
 </body>
 </html>
