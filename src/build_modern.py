@@ -213,35 +213,75 @@ def main():
     LQ_AUTO=1.3       # endemism cutoff for the ISONYMY filter: >= -> Mallorca-endemic
     T_ORIGIN=1.5      # origin cutoff on the CLEAN anchors (Catalonia/Balears/Mallorca)
     T_VAL=5.0         # origin cutoff on the NOISY Valencia signal (higher, to exclude Garcia/Martinez)
-    # Below ORIGIN_FLOOR national bearers, LQ_Bal (and LQ_Mall) collapse into Mallorca ENDEMISM
-    # rather than measuring origin: a surname borne by only a handful of people, nearly all in
-    # Mallorca, is Balears-concentrated BY CONSTRUCTION whatever its etymology (Maghrebi, spelling
-    # variant, whatever). That is exactly why the raw rule labels the whole rare tail "català".
-    # So at low frequency the Balears/Mallorca route to "català" is not trusted: an INDEPENDENT
-    # Catalonia (lq_cat) or Valencia (lq_val) signal is required; otherwise origin is left
-    # undetermined ("sense classificar"). Genuinely Castilian rare surnames (not Catalan-domain
-    # concentrated) are unaffected and still fall through to "castellà".
-    ORIGIN_FLOOR=100
+    ORIGIN_FLOOR=100  # see Layer 3 note below
+    # ========================================================================
+    # ORIGIN — a THREE-LAYER epistemic stack.
+    #
+    # Origin is the controversial part: a real person may resent seeing "their"
+    # surname labelled. So we DO NOT emit a single opaque verdict. Origin is
+    # built in three layers of DECREASING evidential strength, each kept
+    # separate and each tagged per surname (endem[s]["origin_basis"]) so the
+    # site can say exactly WHY a surname landed where it did — and so a reader
+    # who distrusts a soft layer can discard it and keep the hard one.
+    #
+    # CRUCIAL: none of this feeds the isonymy / Mantel statistics. Those run on
+    # Layer 1 endemism alone. Origin is descriptive colour, not a result.
+    #
+    #   Layer 1 — MEASURED (INE, reproducible). Not itself an origin label: the
+    #     substrate. Each surname's Mallorca-vs-Spain concentration (lq),
+    #     province rates (lq_cat/bal/val), national frequency (spain). Pure
+    #     arithmetic on INE tables; anyone rebuilds it identically. Zero judgement.
+    #
+    #   Layer 2 — CURATED FOREIGN FLAG (external knowledge, reviewable). A
+    #     "recent foreign immigration" mark. Two sources, tagged apart:
+    #       * "ine_nationality": the surname is in INE "Apellidos por
+    #         nacionalidad" (top-20 per country) -> INE-DIRECT.
+    #       * "curated_foreign": the tail INE truncates below its top-20, caught
+    #         by a small hand gazetteer (FOREIGN_MANUAL). This is onomastic
+    #         knowledge, NOT INE — hence its own basis tag, explicit and auditable.
+    #     Needed because a recent Moroccan surname and an old Mallorcan one are
+    #     INDISTINGUISHABLE by INE distribution alone (both Mallorca-concentrated).
+    #
+    #   Layer 3 — CONCENTRATION PROXY (inference, DESCRIPTIVE). català vs
+    #     castellà from over-representation in the Catalan-speaking provinces
+    #     (province LQ). It is a proxy for linguistic DOMAIN, NOT etymology:
+    #     "català" means "concentrated in the Catalan lands per INE", nothing
+    #     about a surname's root. Runs only on what Layer 2 did NOT flag, so
+    #     recent immigrants never reach it. And below ORIGIN_FLOOR national
+    #     bearers the LQ_Bal signal collapses into Mallorca endemism (a rare
+    #     surname almost all on the island is Balears-concentrated BY
+    #     CONSTRUCTION, whatever its root), so there we DEMAND an independent
+    #     Catalonia/Valencia signal; lacking it, we say "sense classificar"
+    #     rather than guess. We would rather leave a surname unlabelled than
+    #     assert an origin the data cannot support.
+    # ========================================================================
     FOREIGN_LABELS={"magrebí","subsaharià","asiàtic","europeu"}
-    oref=load_origin_ref()
-    for lab,names in FOREIGN_MANUAL.items():          # hand-verified extension (beyond INE's top-20)
-        for s in names: oref.setdefault(s,lab)
+    oref_nac=load_origin_ref()                        # Layer 2a: INE nationality lists (INE-direct)
+    oref_manual={}                                    # Layer 2b: curated gazetteer (external knowledge)
+    for lab,names in FOREIGN_MANUAL.items():
+        for s in names: oref_manual.setdefault(s,lab)
+    oref={**oref_manual,**oref_nac}                   # union (INE wins ties) for endemic-set hygiene (is_auto)
     def indep_catalan(e):     # Catalan signal INDEPENDENT of Mallorca/Balears endemism
         return (e["lq_cat"] is not None and e["lq_cat"]>=T_ORIGIN) or \
                (e["lq_val"] is not None and e["lq_val"]>=T_VAL)
     def origin_of(s):
+        """Return (label, basis). basis names the LAYER that decided it."""
         e=endem[s]; cs=e["cat_score"]; lv=e["lq_val"]
-        if s in oref: return oref[s]                  # 1) foreign immigrant (nationality lists + gazetteer)
+        # --- Layer 2: recent-foreign flag ---------------------------------
+        if s in oref_nac:    return oref_nac[s],    "ine_nationality"   # INE-direct
+        if s in oref_manual: return oref_manual[s], "curated_foreign"   # external, curated
+        # --- Layer 3: català/castellà by concentration (descriptive proxy) -
         low = e["spain"] is not None and e["spain"]<ORIGIN_FLOOR
         if low and cs is not None and cs>=T_ORIGIN and not indep_catalan(e):
-            return "sense classificar"                # 2') rare tail: "català" only via Balears/Mallorca
-                                                      #     concentration = endemism, not origin -> undetermined
-        if cs is not None and cs>=T_ORIGIN: return "català"   # 2) Catalan-domain (Principat/Balears/Mallorca)
-        if lv is not None and lv>=T_VAL:   return "català"    # 2b) strongly Valencian (noisy source, high bar)
-        if e["spain"]: return "castellà"              # 3) in INE national, not Catalan-concentrated
-        return "sense classificar"                    # 4) tail: not in INE national, no nationality list
-    origin={s:origin_of(s) for s in endem}
-    for s in endem: endem[s]["origin"]=origin[s]
+            return "sense classificar","undetermined"   # rare tail: only Balears/Mallorca signal = endemism
+        if cs is not None and cs>=T_ORIGIN: return "català","concentration"
+        if lv is not None and lv>=T_VAL:    return "català","concentration"
+        if e["spain"]:                      return "castellà","concentration"
+        return "sense classificar","undetermined"       # not in INE national, no nationality list
+    origin={}
+    for s in endem:
+        lab,basis=origin_of(s)
+        origin[s]=lab; endem[s]["origin"]=lab; endem[s]["origin_basis"]=basis
 
     # Xueta surnames: the canonical 15-surname list of Mallorcan converso (crypto-Jewish)
     # descendants fixed by Miquel Forteza. A DOCUMENTED HISTORICAL overlay, ORTHOGONAL to
@@ -380,6 +420,7 @@ def main():
          "isonymy_source":iso_src,
          "muni_stats":muni_stats,"muni_surnames":muni_surnames,
          "origins":ORIGINS,"origin_overall":overall,"muni_origin":muni_origin,
+         "origin_basis_counts":dict(__import__("collections").Counter(endem[s]["origin_basis"] for s in endem)),
          "by_surname":by_surname,
          "n_municipalities":len(munis),"pop_mallorca_covered":pop_mall,
          "lq_bands":{"auto":LQ_AUTO,"origin":T_ORIGIN,"val":T_VAL,"mass":MASS_FLOOR,"origin_floor":ORIGIN_FLOOR},
@@ -415,6 +456,7 @@ def main():
     oc=Counter(origin.values())
     print("origin (surnames):",dict(oc))
     print("origin (population share):",overall)
+    print("origin BASIS (which layer decided):",dict(Counter(endem[s]["origin_basis"] for s in endem)))
     print("check (disputed surnames): surname lq_cat lq_bal lq_mall lq_val cat_score -> origin")
     for s in ["FUSTER","NEBOT","MOLL","MUNTANER","POMAR","FEMENIA","MIRALLES","CATALA","GOMIS","NAVARRO","MARTINEZ","GARCIA"]:
         if s in endem:

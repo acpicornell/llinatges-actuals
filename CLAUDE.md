@@ -39,19 +39,32 @@ Read `README.md` first (sources + pipeline + results).
 - **Two orthogonal axes** (keep separate):
   - **ENDEMISM** = LQ of a surname in Mallorca vs Spain (drives the isonymy filter). A mass
     floor (freq ≥ 20) removes the tiny-count tail the full census surfaces.
-  - **ORIGIN** = Catalan-domain concentration from per-province INE rates (`census_prov.csv`,
-    `mapaWidget&tipo=1`): LQ_Cat/Bal/Val. Plus a foreign screen = INE "Apellidos por
-    nacionalidad" (`nac_*.csv`, top-20/country) + a conservative hand `FOREIGN_MANUAL`
-    gazetteer in `build_modern.py` for the rare recent-immigrant surnames the top-20 misses.
-    The gazetteer EXCLUDES centuries-old Andalusi-Mallorcan stock (Bennàssar, Binimelis,
-    Bibiloni). LQ measures endemism, NOT etymology.
-    - **Low-frequency origin floor (`ORIGIN_FLOOR = 100`).** Below 100 national bearers, LQ_Bal is
-      collinear with Mallorca endemism (a surname borne by ~20 people almost all in Mallorca is
-      Balears-concentrated by construction, whatever its etymology), so it is NOT trusted as origin
-      evidence: a rare surname is "català" only with an INDEPENDENT Catalonia (LQ_Cat) or Valencia
-      (LQ_Val) signal, else it is left **"sense classificar"**. This demotes the rare endemic-foreign
-      tail (Ahabchi, Krich…) the raw rule mislabelled "català"; genuine Castilian rare surnames and the
-      known-foreign screen are untouched. 649 surnames, ~1.1 % of population mass.
+  - **ORIGIN** = a **3-layer epistemic stack** (in `build_modern.py`, `origin_of` returns
+    `(label, basis)`; each surname carries `origin_basis` in the JSON). Built this way ON PURPOSE:
+    origin is the controversial part (people resent seeing "their" surname labelled), so we never
+    emit an opaque verdict — every label is tagged with the layer that decided it, and **none of
+    the layers feed the isonymy/Mantel statistics** (those run on ENDEMISM alone). Origin is
+    descriptive colour, not a result. Layers, by decreasing evidential strength:
+    - **Layer 1 — MEASURED (INE).** The substrate, not a label: Mallorca-vs-Spain concentration (LQ)
+      + per-province rates (LQ_Cat/Bal/Val from `census_prov.csv`, `mapaWidget&tipo=1`) + national
+      frequency. Pure arithmetic on INE tables, reproducible, zero judgement.
+    - **Layer 2 — CURATED FOREIGN FLAG.** A "recent immigration" mark, two bases tagged apart:
+      `ine_nationality` = surname in INE "Apellidos por nacionalidad" (`nac_*.csv`, top-20/country,
+      INE-direct); `curated_foreign` = the tail below INE's top-20, caught by the conservative hand
+      `FOREIGN_MANUAL` gazetteer (external onomastic knowledge, NOT INE, auditable). EXCLUDES
+      centuries-old Andalusi-Mallorcan stock (Bennàssar, Binimelis, Bibiloni). Needed because INE
+      distribution alone cannot tell a recent Moroccan surname from an old Mallorcan one.
+    - **Layer 3 — CONCENTRATION PROXY (descriptive).** català vs castellà from over-representation
+      in the Catalan-speaking provinces (LQ_Cat/Bal ≥ `T_ORIGIN=1.5`, or LQ_Val ≥ `T_VAL=5`). A proxy
+      for linguistic DOMAIN, NOT etymology ("català" = "concentrated in the Catalan lands per INE").
+      Runs only on what Layer 2 did not flag. **Low-frequency floor `ORIGIN_FLOOR = 100`:** below 100
+      national bearers LQ_Bal is collinear with Mallorca endemism (a rare surname almost all on the
+      island is Balears-concentrated by construction), so there an INDEPENDENT Catalonia/Valencia
+      signal is required, else **"sense classificar"** rather than a guess.
+    - `basis` counts (JSON `origin_basis_counts`): ~7015 concentration · ~256 ine_nationality ·
+      ~55 curated_foreign · ~649 undetermined. The web surfaces each surname's layer as a badge in
+      the sidebar search, and the Methodology tab documents the stack + an "if your surname looks
+      wrong" note.
 
 ## Pipeline (INE → JSON → web)
 
