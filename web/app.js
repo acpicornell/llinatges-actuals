@@ -40,7 +40,8 @@ const BASIS={
 const basisTag=e=>{const b=BASIS[e&&e.origin_basis]; return b?
   ` <span class="basis" title="${b.d}">${b.t}</span>`:"";};
 
-// --- origin layer: REAL Catalan-vs-Castilian proxy (data-driven, no LLM) ----
+// --- Origen tab: the 3-layer origin stack (measured INE / curated foreign / concentration proxy) ----
+// Descriptive only; none of it feeds the isonymy statistics.
 function buildOrigin(){
   const el=document.getElementById("origen-body");
   const ov=D.origin_overall, ORS=D.origins, E=D.endemism;
@@ -247,13 +248,14 @@ function buildConclusions(){
   <p>És l'eix <b>interior autòcton</b> vs <b>Palma / costa turística</b> (immigrant): un gradient
   centre-perifèria mesurat sobre centenars de milers de persones.</p>
 
-  <h3>3. Origen real: català vs castellà, comparant amb el domini de parla catalana</h3>
+  <h3>3. Origen: català vs castellà per concentració al domini de parla catalana</h3>
   <p>Dos eixos <b>diferents</b>: l'<b>endemisme</b> (concentració a Mallorca, seccions 1–3, mou la geografia) i
-  l'<b>origen</b>. Per a l'origen, en comptes de mesurar concentració a Mallorca (que és endemisme, no
-  etimologia), es mesura la concentració al <b>domini catalanoparlant sencer</b>: un cognom és <b>català</b> si
-  està sobrerepresentat a <b>Catalunya</b>, <b>Balears</b> <i>o</i> al <b>País Valencià</b> respecte de la
-  mitjana espanyola —tot des d'una <b>sola font</b>, l'<b>API de cognoms de l'INE</b> (taxa per província).
-  Això <b>sí</b> distingeix origen —resol el problema que l'endemisme sol no podia:</p>
+  l'<b>origen</b> (eix <b>descriptiu</b>: no entra a la isonímia ni a cap estadística). Per a l'origen, en comptes
+  de mesurar concentració a Mallorca (que és endemisme), es mesura la concentració al <b>domini catalanoparlant
+  sencer</b>: un cognom és <b>català</b> si està sobrerepresentat a <b>Catalunya</b>, <b>Balears</b> <i>o</i> al
+  <b>País Valencià</b> respecte de la mitjana espanyola —tot des d'una <b>sola font</b>, l'<b>API de cognoms de
+  l'INE</b> (taxa per província). És una <b>aproximació de domini lingüístic</b> (on es concentra el cognom, no
+  d'on ve), que l'endemisme sol no donava:</p>
   <ul>
     <li><b style="color:${oc('català')}">Català</b> (${nCat} cognoms): ${catEx.map(s=>`${s.charAt(0)+s.slice(1).toLowerCase()} (${csc(s)})`).join(" · ")} — Principat (Ferrer, Nebot, Vidal), Balears (Amengual, Moll) i País Valencià (Miralles, Català, Gomis, Ballester).</li>
     <li><b style="color:${oc('castellà')}">Castellà</b> (${nCast}): ${casEx.map(s=>`${s.charAt(0)+s.slice(1).toLowerCase()} (${csc(s)||lq(s)})`).join(" · ")} — a l'INE però <b>no</b> concentrats al domini català.</li>
@@ -663,13 +665,15 @@ function buildMethod(){
     <p><b>INE — API de cognoms</b> (operació APEL, la mateixa del cercador d'ine.es) — <b>una sola font</b> per a
     tot: (a) el <b>total nacional</b> de cada cognom ≥20 a Espanya → la <b>llista</b> de partida
     (${D.all.n_surnames.toLocaleString('ca')} cognoms presents a Mallorca); (b) la <b>taxa per província</b>
-    (<code>mapaWidget&amp;tipo=1</code>) → l'eix d'origen (Catalunya, Balears, País Valencià); (c) la <b>taxa per
+    (<code>mapaWidget&amp;tipo=1</code>) → l'eix català/castellà de l'origen (Capa 3); (c) la <b>taxa per
     municipi</b> (<code>mapaWidget&amp;vista=muni</code>) → reconstrucció dels <b>recomptes municipals</b>
     (taxa‰ × padró, ≥5 per poble; reconstrucció exacta, la taxa‰ surt d'aquest mateix padró) sobre els quals es
     calcula <b>tota l'anàlisi</b> (isonímia, endemisme, composició i navegador). Població: <b>padró INE</b>
     (operació 22, taula 2860). Coordenades: NGIB.</p>
-    <p class="hint" style="color:var(--muted)">L'origen ve tot de l'API de l'INE per província: una sola font,
-    sense el soroll de fonts heterogènies; el recompte complet capta bé cognoms com Muntaner i Pomar.</p>
+    <p class="hint" style="color:var(--muted)">L'eix <b>català/castellà</b> (Capa 3) ve tot de l'API de l'INE per
+    província —una sola font, sense barreja de fonts heterogènies—, i el recompte complet capta bé cognoms com
+    Muntaner i Pomar. La <b>marca de forà</b> (Capa 2) hi afegeix les llistes INE de nacionalitat i una llista
+    curada; vegeu-ho detallat a sota.</p>
 
     <h3>2. Endemisme (mesura) i origen (3 capes)</h3>
     <p><b>Endemisme</b> — l'eix que mou la geografia i que alimenta la isonímia:
