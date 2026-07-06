@@ -25,6 +25,21 @@ const ORIGIN_COLOR={"català":"#3fae74","castellà":"#c96a5a","magrebí":"#d8a13
 const oc=o=>ORIGIN_COLOR[o]||"#7a8a80";
 const CATF=c=>(c["català"]||0);   // Catalan-domain (origin) fraction
 
+// origin_basis -> which of the 3 layers decided this surname's origin, as a small
+// badge with a plain-language tooltip. This is what answers "why is MY surname
+// labelled like this?" in place, on the surname itself.
+const BASIS={
+  concentration:{t:"per concentració",
+    d:"CAPA 3 (proxy descriptiu). Assignat per la concentració del cognom a les províncies catalanoparlants segons l'INE. Mesura DOMINI lingüístic, no etimologia: «català» vol dir «concentrat a les terres catalanes», res sobre l'arrel del cognom."},
+  ine_nationality:{t:"llista INE nacionalitat",
+    d:"CAPA 2 (dada directa INE). El cognom surt a «Apellidos por nacionalidad» de l'INE (top-20 del país). Marca d'immigració, no judici nostre."},
+  curated_foreign:{t:"llista curada",
+    d:"CAPA 2 (curat, revisable). Cognom d'immigració recent per sota del top-20 que publica l'INE; marcat amb una llista curada de coneixement onomàstic. NO és INE i és auditable."},
+  undetermined:{t:"sense classificar",
+    d:"CAPA 3. A baixa freqüència la concentració no distingeix un cognom català endèmic d'un forà endèmic; no ho afirmem en comptes d'inventar-ho."}};
+const basisTag=e=>{const b=BASIS[e&&e.origin_basis]; return b?
+  ` <span class="basis" title="${b.d}">${b.t}</span>`:"";};
+
 // --- origin layer: REAL Catalan-vs-Castilian proxy (data-driven, no LLM) ----
 function buildOrigin(){
   const el=document.getElementById("origen-body");
@@ -34,34 +49,47 @@ function buildOrigin(){
   const leg=ORS.map(o=>`<span class="oleg"><span class="sw" style="background:${oc(o)}"></span>${o} <b>${(ov[o]*100).toFixed(1)}%</b></span>`).join("");
   const foreignCats=["magrebí","subsaharià","asiàtic","europeu"];
   const foreign=Object.entries(E).filter(([s,e])=>foreignCats.includes(e.origin));
-  const flist=foreign.map(([s,e])=>`<span class="pill" style="border-color:${oc(e.origin)};color:${oc(e.origin)}">${s.replace(/_/g,' ')} · ${e.origin}</span>`).join(" ")||"—";
   const nCat=Object.values(E).filter(e=>e.origin==="català").length;
   const nCast=Object.values(E).filter(e=>e.origin==="castellà").length;
+  const bc=D.origin_basis_counts||{};
+  const nNac=bc.ine_nationality||0, nCur=bc.curated_foreign||0, nUnd=bc.undetermined||0;
   const munis=Object.entries(D.muni_origin).sort((a,b)=>CATF(b[1])-CATF(a[1]));
   const th=`<tr><th>municipi</th>`+ORS.map(o=>`<th class="num" style="color:${oc(o)}">${o.split(' ')[0]}</th>`).join("")+`</tr>`;
   const rows=munis.map(([m,c])=>`<tr><td>${m}</td>`+ORS.map(o=>`<td class="num" data-v="${c[o]||0}">${c[o]?Math.round(c[o]*100)+'%':'·'}</td>`).join("")+`</tr>`).join("");
   el.innerHTML=`
-    <p>Origen <b>real</b>, <b>només amb dades obertes</b> (sense LLM, sense lexicon). Un cognom és
-    <b style="color:${oc('català')}">català</b> (${nCat}) si està <b>concentrat al domini catalanoparlant</b>
-    per damunt de la mitjana espanyola a les <b>terres catalanes</b> (<b>Catalunya</b>, <b>Balears</b>,
-    <b>País Valencià</b>) —tot des de l'<b>API de cognoms de l'INE</b>, taxa per província, una sola font—;
-    <b style="color:${oc('castellà')}">castellà</b> (${nCast}) si surt a l'INE però <b>no</b> hi està
-    concentrat; <b>forà</b> si és a les llistes INE per nacionalitat <b>o</b> a una <b>llista curada</b>
-    de cognoms d'immigració recent (magrebins, sikhs) que l'INE no recull —només en publica el top-20
-    per país— i que, per freqüència, són <b>indistingibles</b> d'un cognom mallorquí endèmic. Això <b>sí</b> separa origen:
-    Ferrer, Nebot, Vidal al Principat; Amengual, Moll, Fuster a Balears; Miralles, Català, Gomis, Ballester al
-    País Valencià; García, Martínez repartits per Espanya.</p>
+    <p class="caveat" style="margin-top:0">◻ <b>Què és, en una frase.</b> L'INE només ens diu <b>on viu avui</b> la
+    gent amb cada cognom, <b>no</b> d'on ve. Fem servir aquesta geografia com a <b>aproximació</b> d'origen. Per
+    tant <b>«català» = on es concentra, no d'on prové</b> el cognom — i <b>res d'aquesta pestanya afecta els
+    resultats de l'estudi</b> (la isonímia i l'aïllament per distància van per endemisme, no per origen).</p>
+    <h3 class="osub" style="margin-top:4px">Com decidim l'origen: 3 nivells, del més sòlid al més fluix</h3>
+    <div class="layers3">
+      <div class="concept" style="border-left-color:#6aa9d0">
+        <h4><span>1 · El que mesura l'INE</span><span class="lstat" style="color:#6aa9d0">mesurat</span></h4>
+        <p>On es concentra el cognom (Mallorca vs Espanya i per província). <b>Dada pura de l'INE</b>, qualsevol la
+        refà igual. És la base dels dos nivells de sota — encara no diu «català» ni «castellà».</p>
+      </div>
+      <div class="concept" style="border-left-color:var(--warn)">
+        <h4><span>2 · Immigració recent</span><span class="lstat" style="color:var(--warn)">${(nNac+nCur).toLocaleString('ca')} cognoms</span></h4>
+        <p><b>${nNac.toLocaleString('ca')}</b> surten a les llistes de nacionalitat de l'INE; <b>${nCur.toLocaleString('ca')}</b>
+        els afegim <b>a mà</b> (l'INE talla pel top-20 de cada país). D'aquests <b>sí</b> sabem que són d'arribada
+        recent — si no, la geografia els diria «català» per error.</p>
+      </div>
+      <div class="concept" style="border-left-color:var(--accent)">
+        <h4><span>3 · Català o castellà</span><span class="lstat" style="color:var(--accent)">aproximació</span></h4>
+        <p>La resta: concentrat a les <b>terres catalanes</b> → <b style="color:${oc('català')}">català</b> (${nCat});
+        si no → <b style="color:${oc('castellà')}">castellà</b> (${nCast}); si no es pot decidir →
+        <b>sense classificar</b> (${nUnd.toLocaleString('ca')}). Recorda: és <b>on viu</b> la gent, no d'on ve el cognom.</p>
+      </div>
+    </div>
+    <p class="hint">Exemples de la Capa 3: <b>Ferrer, Nebot, Vidal</b> (Principat) · <b>Amengual, Moll, Fuster</b>
+    (Balears) · <b>Miralles, Català, Gomis</b> (País Valencià) → català; <b>García, Martínez</b> (repartits per
+    Espanya) → castellà.</p>
     <div class="obar">${bar}</div><div class="oleglist">${leg}</div>
-    <div class="caveat">⚠ <b>El País Valencià és un senyal sorollós</b> (a diferència de Catalunya i Balears):
-    per la repoblació aragonesa i la immigració hi ha cognom castellà sobrerepresentat (Navarro LQ_Val 2,3;
-    Martínez 1,6). Per això el llindar valencià és <b>més alt</b> (LQ≥${D.lq_bands.val}, no ${D.lq_bands.origin}):
-    rescata els valencians de debò (Femenia, Miralles, Català, Gomis…) sense deixar passar García ni Navarro.
-    <br>✓ <b>El recompte provincial de l'INE situa bé Muntaner i Pomar:</b> tot i semblar rars i castellans,
-    tenen de fet LQ_Bal altíssim (28,8 i 12,5) → <b>català</b> correctament. No detecta l'estrat andalusí/mossàrab: cognoms com <b>Bennàssar</b>,
-    <b>Binimelis</b> o <b>Bibiloni</b>, d'ètim àrab però mallorquins <b>fa segles</b>, són —correctament— autòctons,
-    <b>no</b> immigració recent.<br>⚠ <b>Orígens forans (${foreign.length}):</b> ${flist}. Detectats amb les llistes
-    INE per nacionalitat <b>+ una llista curada</b> (l'INE només publica el top-20 per país). Encara
-    <b>subestimats</b> (l'INE per nacionalitat només arriba al top-20 per país) i algun rar sense regió assignada (Nineb, Masaquiza queden per revisar).</div>
+    <div class="caveat">⚠ <b>Orígens forans (${foreign.length} cognoms):</b> detectats amb les llistes
+    INE per nacionalitat <b>+ una llista curada</b> (l'INE només publica el top-20 per país, així que la cua queda
+    <b>subestimada</b>). No els llistem aquí: cada cognom porta la seva etiqueta a la columna <b>capa</b>
+    d'<b>Endemisme</b> i a la cerca. El detall (llindar valencià, Muntaner/Pomar, estrat andalusí) és a
+    <b>Metodologia</b>.</div>
     <div class="caveat">◻ <b>«Sense classificar» (${Object.values(D.endemism).filter(e=>e.origin==='sense classificar').length} cognoms, ~1% de la massa):</b>
     cua de cognoms raríssims (&lt;${D.lq_bands.origin_floor} portadors a Espanya) l'única marca catalana dels quals és estar concentrats a
     <b>Balears</b>. A aquesta freqüència, «concentrat a Balears» <b>no</b> és origen: és el mateix que endemisme a Mallorca (un cognom
@@ -291,7 +319,7 @@ function applySurname(query){
   if(!matched.length){ box.innerHTML=`<p class="none">Cap cognom «${query}» al cens de 2025 (els ${D.all.n_surnames.toLocaleString('ca')} del cens de cognoms de l'INE).</p>`; return; }
   const heads=matched.map(sn=>{const e=D.endemism[sn];
     const kind=e.origin==='català'?'auto':e.origin==='castellà'?'cast':'none';
-    return `<span class="sn ${kind}">${sn.replace(/_/g,' ')}</span>${e.xueta?' <span class="xu" title="Llinatge de la llista canònica xueta (marca llinatges que inclouen descendents de conversos, no cada portador)">xueta</span>':''} <span class="lqv">LQ ${e.lq??'—'}</span> · ${e.mall.toLocaleString('ca')}`;
+    return `<span class="sn ${kind}">${sn.replace(/_/g,' ')}</span>${e.xueta?' <span class="xu" title="Llinatge de la llista canònica xueta (marca llinatges que inclouen descendents de conversos, no cada portador)">xueta</span>':''} <span class="lqv">LQ ${e.lq??'—'}</span> · ${e.mall.toLocaleString('ca')}${basisTag(e)}`;
   }).join("<br>");
   const munis=Object.entries(muniFreq).sort((a,b)=>b[1]-a[1])
     .map(([m,f])=>`<div class="mrow"><span class="mn">${m}</span><span class="mf">${f}</span></div>`).join("");
@@ -375,20 +403,21 @@ function popup(l){
 function buildEndem(){
   const el=document.getElementById("endem-body");
   const rows=Object.entries(D.endemism).map(([s,e])=>({s,mall:e.mall,spain:e.spain,lq:e.lq,
-    lqc:e.lq_cat,lqb:e.lq_bal,lqv:e.lq_val,cs:e.cat_score,origin:e.origin,xueta:e.xueta}));
+    lqc:e.lq_cat,lqb:e.lq_bal,lqv:e.lq_val,cs:e.cat_score,origin:e.origin,xueta:e.xueta,basis:e.origin_basis}));
   const cls=o=> o==="català"?"auto": o==="castellà"?"cast":"none";
   const nm=v=>v!=null?v:'—';
   const XUBADGE=`<span class="xu" title="Llinatge de la llista canònica xueta (Forteza). Marca llinatges que INCLOUEN descendents de conversos, no cada portador.">xueta</span>`;
   function render(list){
     return `<table><thead><tr><th>cognom</th><th class="num">Mall.</th>
       <th class="num">Esp.</th><th class="num">LQ Mall</th><th class="num">LQ Cat</th>
-      <th class="num">LQ Bal</th><th class="num">LQ Val</th><th>origen</th></tr></thead><tbody>`+
+      <th class="num">LQ Bal</th><th class="num">LQ Val</th><th>origen</th><th>capa</th></tr></thead><tbody>`+
       list.map(r=>`<tr class="${cls(r.origin)}"><td>${r.s.replace(/_/g,' ')}${r.xueta?' '+XUBADGE:''}</td>
         <td class="num" data-v="${r.mall}">${r.mall.toLocaleString('ca')}</td>
         <td class="num" data-v="${r.spain??''}">${r.spain!=null?r.spain.toLocaleString('ca'):'—'}</td>
         <td class="num" data-v="${r.lq??''}">${nm(r.lq)}</td><td class="num" data-v="${r.lqc??''}">${nm(r.lqc)}</td><td class="num" data-v="${r.lqb??''}">${nm(r.lqb)}</td>
         <td class="num" data-v="${r.lqv??''}">${nm(r.lqv)}</td>
-        <td style="color:${oc(r.origin)}">${r.origin}</td></tr>`).join("")+`</tbody></table>`;
+        <td style="color:${oc(r.origin)}">${r.origin}</td>
+        <td data-v="${r.basis||''}">${basisTag({origin_basis:r.basis}).trim()}</td></tr>`).join("")+`</tbody></table>`;
   }
   el.innerHTML = `
     <p><b>Dos eixos diferents</b>, un per columna de la taula:</p>
@@ -642,30 +671,50 @@ function buildMethod(){
     <p class="hint" style="color:var(--muted)">L'origen ve tot de l'API de l'INE per província: una sola font,
     sense el soroll de fonts heterogènies; el recompte complet capta bé cognoms com Muntaner i Pomar.</p>
 
-    <h3>2. Dos eixos: endemisme i origen</h3>
-    <p><b>Endemisme</b> (per a la isonímia): <code>LQ = (freq_Mallorca/pob)/(freq_Espanya/pob)</code>.
-    LQ≫1 = cognom concentrat a l'illa.</p>
-    <p><b>Origen</b> (català vs castellà): es mesura la concentració al <b>domini catalanoparlant sencer</b> —
-    <code>LQ Cat</code> (Catalunya), <code>LQ Bal</code> (Balears) i <code>LQ Val</code> (País Valencià), totes
-    des de l'<b>API de l'INE</b> (taxa província / taxa nacional). Un cognom és <b>català</b> si LQ Cat o
-    LQ Bal ≥ ${D.lq_bands.origin}, <b>o</b> LQ Val ≥ ${D.lq_bands.val}.</p>
-    <p><b>Per què el llindar valencià és més alt:</b> Catalunya i Balears són àncores netes, però el País
-    Valencià té cognom castellà sobrerepresentat per la repoblació aragonesa (Navarro LQ_Val 2,3; Martínez 1,6).
-    Cal un llindar alt per rescatar els valencians genuïns (Femenia, Miralles, Català, Gomis) sense colar-hi
-    Navarro.</p>
-    <p><b>Castellà:</b> present a l'INE però concentrat a cap regió catalana.</p>
-    <p><b>Forà:</b> llistes INE per nacionalitat <b>+ una llista curada</b> de cognoms d'immigració recent
-    (magrebins, sikhs) que l'INE no recull (només top-20 per país) i que —amb LQ Mall alt i absents de
-    Catalunya— la classificació per LQ etiquetaria erròniament com a «català». S'exclouen d'aquesta llista els
-    cognoms d'ètim andalusí <b>establerts fa segles</b> (Bennàssar, Binimelis): són estoc autòcton, no arribada
-    recent.</p>
-    <p><b>Sense classificar (sostre de freqüència):</b> per sota de <b>${D.lq_bands.origin_floor} portadors a
-    Espanya</b>, l'LQ Balears és <b>col·lineal amb l'endemisme</b> —un cognom raríssim gairebé tot a Mallorca
-    hi surt concentrat per construcció, sigui quin sigui l'origen—, així que <b>no</b> el fem servir com a prova
-    d'origen. A baixa freqüència un cognom és <b>català</b> només amb un senyal <b>independent</b> de Catalunya
-    (LQ Cat) o País Valencià (LQ Val); si no, es marca <b>«sense classificar»</b> en comptes d'inventar una
-    etiqueta. Això treu de «català» la cua de forans endèmics (Ahabchi, Krich…) que la regla crua hi posava.
-    Els castellans i els forans coneguts no s'hi veuen afectats.</p>
+    <h3>2. Endemisme (mesura) i origen (3 capes)</h3>
+    <p><b>Endemisme</b> — l'eix que mou la geografia i que alimenta la isonímia:
+    <code>LQ Mall = (freq_Mallorca/pob)/(freq_Espanya/pob)</code>. LQ≫1 = cognom concentrat a l'illa. És
+    <b>mesura directa</b> de dades de l'INE i és l'<b>únic</b> que fan servir els estadístics d'aquest estudi.</p>
+
+    <p><b>Origen</b> (català / castellà / forà) és <b>una altra cosa</b>, i és la part delicada: a ningú li agrada
+    veure «el seu» cognom etiquetat. Per això <b>no</b> donem un veredicte opac. L'origen es construeix en
+    <b>tres capes de força probatòria decreixent</b>, cadascuna <b>marcada a cada cognom</b> (cerca'l a la barra
+    lateral i veuràs l'etiqueta de la capa que ho ha decidit). Punt clau: <b>cap capa d'origen alimenta les
+    estadístiques</b> — la isonímia i l'aïllament per distància van només per endemisme. L'origen és
+    <b>color descriptiu</b>, no un resultat.</p>
+
+    <p><b>Capa 1 · Mesurat (INE, reproduïble).</b> No és una etiqueta d'origen, és el substrat: la concentració
+    Mallorca-vs-Espanya (LQ) i les <b>taxes per província</b> (LQ Cat/Bal/Val, de l'API de l'INE), més la
+    freqüència nacional. Aritmètica pura sobre taules de l'INE; qualsevol la refà idèntica, sense cap judici.</p>
+
+    <p><b>Capa 2 · Marca de forà (curada, revisable).</b> Un senyal binari d'<b>immigració recent</b>, amb dues
+    procedències que <b>distingim</b>: <span class="basis">llista INE nacionalitat</span> = el cognom surt a
+    «Apellidos por nacionalidad» de l'INE (top-20 del país, <b>dada directa INE</b>); <span class="basis">llista
+    curada</span> = la cua per sota d'aquest top-20, marcada a mà (<b>coneixement onomàstic, NO INE</b>, i
+    auditable). Cal perquè un cognom marroquí recent i un de mallorquí vell són <b>indistingibles per la
+    distribució de l'INE</b> (tots dos concentrats a Mallorca). Exclou a posta l'estoc andalusí de fa segles
+    (Bennàssar, Binimelis): no és arribada recent.</p>
+
+    <p><b>Capa 3 · Proxy de concentració (inferència, DESCRIPTIVA).</b> català vs castellà per
+    sobrerepresentació a les províncies catalanoparlants (LQ Cat/Bal ≥ ${D.lq_bands.origin}, o LQ Val ≥
+    ${D.lq_bands.val}, més alt perquè el País Valencià té molt cognom castellà per la repoblació aragonesa). És un
+    proxy de <b>domini lingüístic, NO d'etimologia</b>: «català» vol dir <i>«concentrat a les terres catalanes
+    segons l'INE»</i>, res sobre l'arrel del cognom. Corre <b>només</b> sobre el que la Capa 2 no ha marcat, així
+    que cap immigrant recent hi arriba. I per sota de <b>${D.lq_bands.origin_floor} portadors a Espanya</b> la
+    concentració a Balears és <b>col·lineal amb l'endemisme</b> (un cognom raríssim gairebé tot a l'illa hi surt
+    concentrat per construcció), així que allà <b>exigim</b> un senyal independent de Catalunya o València; si no
+    n'hi ha, es queda <b>«sense classificar»</b> en comptes d'inventar-ho.</p>
+
+    <div class="caveat">⚠ <b>Si el teu cognom sembla mal classificat</b>, mira'n l'etiqueta de capa a la cerca.
+    Si diu <span class="basis">per concentració</span>, <b>no</b> estem dient d'on ve el teu cognom ni qui eres:
+    diem <b>on viu avui</b> la gent que el porta (Capa 3, un proxy descriptiu, no etimologia). «Català» no vol dir
+    «d'ètim català» ni «castellà» vol dir «no mallorquí» — mesuren concentració geogràfica, no llinatge. Els
+    veredictes de debò (Moll, Coromines) són en diccionaris; aquí no els fem servir. Repartiment actual de com
+    s'ha decidit cada cognom: <b>${((D.origin_basis_counts||{}).concentration||0).toLocaleString('ca')}</b> per
+    concentració (Capa 3) · <b>${((D.origin_basis_counts||{}).ine_nationality||0).toLocaleString('ca')}</b> per llista
+    INE de nacionalitat (Capa 2) · <b>${((D.origin_basis_counts||{}).curated_foreign||0).toLocaleString('ca')}</b> per
+    llista curada (Capa 2) · <b>${((D.origin_basis_counts||{}).undetermined||0).toLocaleString('ca')}</b> sense
+    classificar.</div>
 
     <h3>3. Isonímia</h3>
     <p>S'aplica sobre el filtre d'<b>endemisme</b> (no d'origen: la geografia interna de Mallorca ve dels
