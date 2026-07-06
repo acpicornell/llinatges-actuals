@@ -83,17 +83,19 @@ function downloadCSV(filename, rows){
 function buildMunis(){
   const el=document.getElementById("munis-body");
   const E=D.endemism, MS=D.muni_surnames;
-  // municipalities sorted by population (largest first)
+  // municipalities sorted by population (largest first) — drives the CSV order and default selection
   const locs=Object.keys(MS).sort((a,b)=>(D.municipality_pop[b]||0)-(D.municipality_pop[a]||0));
+  // dropdown listed alphabetically (Catalan collation); Palma stays the default landing
+  const optLocs=[...locs].sort((a,b)=>a.localeCompare(b,"ca"));
   const cls=o=> o==="català"?"auto": o==="castellà"?"cast":"none";
   const nm=v=>v!=null?v:'—';
-  const XUBADGE=`<span class="xu" title="Llinatge de la llista canònica xueta (Forteza). Marca lineatges que INCLOUEN descendents de conversos, no cada portador.">xueta</span>`;
+  const XUBADGE=`<span class="xu" title="Llinatge de la llista canònica xueta (Forteza). Marca llinatges que INCLOUEN descendents de conversos, no cada portador.">xueta</span>`;
   el.innerHTML=`
     <p>Explora la taula <b>completa de cognoms visibles</b> (recompte municipal de l'INE 2025, 1r cognom,
     tots els que tenen ≥5 portadors) d'un municipi: freqüència, taxa per mil habitants, LQ d'endemisme i
     origen. Tria un municipi i baixa'l en CSV.</p>
     <div class="mn-bar">
-      <select id="mn-sel">${locs.map(m=>`<option value="${m}">${m} · ${(D.municipality_pop[m]||0).toLocaleString('ca')} hab.</option>`).join("")}</select>
+      <select id="mn-sel">${optLocs.map(m=>`<option value="${m}"${m===locs[0]?" selected":""}>${m} · ${(D.municipality_pop[m]||0).toLocaleString('ca')} hab.</option>`).join("")}</select>
       <button class="dl" id="mn-dl-one">Baixar aquest municipi (CSV)</button>
       <button class="dl" id="mn-dl-all">Baixar tot (municipi × cognom, CSV)</button>
     </div>
@@ -284,7 +286,7 @@ function applySurname(query){
   if(!matched.length){ box.innerHTML=`<p class="none">Cap cognom «${query}» al cens de 2025 (els ${D.all.n_surnames.toLocaleString('ca')} del cens de cognoms de l'INE).</p>`; return; }
   const heads=matched.map(sn=>{const e=D.endemism[sn];
     const kind=e.origin==='català'?'auto':e.origin==='castellà'?'cast':'none';
-    return `<span class="sn ${kind}">${sn.replace(/_/g,' ')}</span>${e.xueta?' <span class="xu" title="Llinatge de la llista canònica xueta (marca lineatges que inclouen descendents de conversos, no cada portador)">xueta</span>':''} <span class="lqv">LQ ${e.lq??'—'}</span> · ${e.mall.toLocaleString('ca')}`;
+    return `<span class="sn ${kind}">${sn.replace(/_/g,' ')}</span>${e.xueta?' <span class="xu" title="Llinatge de la llista canònica xueta (marca llinatges que inclouen descendents de conversos, no cada portador)">xueta</span>':''} <span class="lqv">LQ ${e.lq??'—'}</span> · ${e.mall.toLocaleString('ca')}`;
   }).join("<br>");
   const munis=Object.entries(muniFreq).sort((a,b)=>b[1]-a[1])
     .map(([m,f])=>`<div class="mrow"><span class="mn">${m}</span><span class="mf">${f}</span></div>`).join("");
@@ -371,7 +373,7 @@ function buildEndem(){
     lqc:e.lq_cat,lqb:e.lq_bal,lqv:e.lq_val,cs:e.cat_score,origin:e.origin,xueta:e.xueta}));
   const cls=o=> o==="català"?"auto": o==="castellà"?"cast":"none";
   const nm=v=>v!=null?v:'—';
-  const XUBADGE=`<span class="xu" title="Llinatge de la llista canònica xueta (Forteza). Marca lineatges que INCLOUEN descendents de conversos, no cada portador.">xueta</span>`;
+  const XUBADGE=`<span class="xu" title="Llinatge de la llista canònica xueta (Forteza). Marca llinatges que INCLOUEN descendents de conversos, no cada portador.">xueta</span>`;
   function render(list){
     return `<table><thead><tr><th>cognom</th><th class="num">Mall.</th>
       <th class="num">Esp.</th><th class="num">LQ Mall</th><th class="num">LQ Cat</th>
@@ -623,7 +625,7 @@ function buildMethod(){
     (operació 22, taula 2860). Coordenades: NGIB.</p>
     <p class="hint" style="color:var(--muted)">L'origen ve tot de l'API de l'INE per província: una sola font,
     sense el soroll de fonts heterogènies, i amb el recompte complet rescata cognoms que una llista truncada
-    undercomptaria (Muntaner, Pomar).</p>
+    infracomptaria (Muntaner, Pomar).</p>
 
     <h3>2. Dos eixos: endemisme i origen</h3>
     <p><b>Endemisme</b> (per a la isonímia): <code>LQ = (freq_Mallorca/pob)/(freq_Espanya/pob)</code>.
