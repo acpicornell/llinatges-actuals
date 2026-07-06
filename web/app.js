@@ -30,7 +30,7 @@ const CATF=c=>(c["català"]||0);   // Catalan-domain (origin) fraction
 // labelled like this?" in place, on the surname itself.
 const BASIS={
   concentration:{t:"per concentració",
-    d:"CAPA 3 (proxy descriptiu). Assignat per la concentració del cognom a les províncies catalanoparlants segons l'INE. Mesura DOMINI lingüístic, no etimologia: «català» vol dir «concentrat a les terres catalanes», res sobre l'arrel del cognom."},
+    d:"CAPA 3 (proxy descriptiu). Assignat per la concentració del cognom a les províncies catalanoparlants segons l'INE. Mesura DOMINI lingüístic, no etimologia: «català» vol dir «concentrat a les terres de parla catalana», res sobre l'arrel del cognom."},
   ine_nationality:{t:"llista INE nacionalitat",
     d:"CAPA 2 (dada directa INE). El cognom surt a «Apellidos por nacionalidad» de l'INE (top-20 del país). Marca d'immigració, no judici nostre."},
   curated_foreign:{t:"llista curada",
@@ -76,7 +76,7 @@ function buildOrigin(){
       </div>
       <div class="concept" style="border-left-color:var(--accent)">
         <h4><span>3 · Català o castellà</span><span class="lstat" style="color:var(--accent)">aproximació</span></h4>
-        <p>La resta: concentrat a les <b>terres catalanes</b> → <b style="color:${oc('català')}">català</b> (${nCat});
+        <p>La resta: concentrat a les <b>terres de parla catalana</b> → <b style="color:${oc('català')}">català</b> (${nCat});
         si no → <b style="color:${oc('castellà')}">castellà</b> (${nCast}); si no es pot decidir →
         <b>sense classificar</b> (${nUnd.toLocaleString('ca')}). Recorda: és <b>on viu</b> la gent, no d'on ve el cognom.</p>
       </div>
@@ -247,7 +247,7 @@ function buildConclusions(){
   <p>És l'eix <b>interior autòcton</b> vs <b>Palma / costa turística</b> (immigrant): un gradient
   centre-perifèria mesurat sobre centenars de milers de persones.</p>
 
-  <h3>3. Origen real: català vs castellà, comparant amb els Països Catalans</h3>
+  <h3>3. Origen real: català vs castellà, comparant amb el domini de parla catalana</h3>
   <p>Dos eixos <b>diferents</b>: l'<b>endemisme</b> (concentració a Mallorca, seccions 1–3, mou la geografia) i
   l'<b>origen</b>. Per a l'origen, en comptes de mesurar concentració a Mallorca (que és endemisme, no
   etimologia), es mesura la concentració al <b>domini catalanoparlant sencer</b>: un cognom és <b>català</b> si
@@ -698,7 +698,7 @@ function buildMethod(){
     <p><b>Capa 3 · Proxy de concentració (inferència, DESCRIPTIVA).</b> català vs castellà per
     sobrerepresentació a les províncies catalanoparlants (LQ Cat/Bal ≥ ${D.lq_bands.origin}, o LQ Val ≥
     ${D.lq_bands.val}, més alt perquè el País Valencià té molt cognom castellà per la repoblació aragonesa). És un
-    proxy de <b>domini lingüístic, NO d'etimologia</b>: «català» vol dir <i>«concentrat a les terres catalanes
+    proxy de <b>domini lingüístic, NO d'etimologia</b>: «català» vol dir <i>«concentrat a les terres de parla catalana
     segons l'INE»</i>, res sobre l'arrel del cognom. Corre <b>només</b> sobre el que la Capa 2 no ha marcat, així
     que cap immigrant recent hi arriba. I per sota de <b>${D.lq_bands.origin_floor} portadors a Espanya</b> la
     concentració a Balears és <b>col·lineal amb l'endemisme</b> (un cognom raríssim gairebé tot a l'illa hi surt
