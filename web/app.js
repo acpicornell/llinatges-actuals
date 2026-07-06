@@ -168,7 +168,7 @@ function buildConclusions(){
   const arow=r=>`<tr><td>${r.m}</td><td class="num">${r.pop.toLocaleString('ca')}</td><td class="num">${pc(r.au)}</td></tr>`;
 
   document.getElementById("concl-body").innerHTML = `
-  <h2>Conclusions <span class="tag">EXPLORACIÓ</span></h2>
+  <h2>Conclusions</h2>
   <p class="lead">Instantània de 2025 (cens de cognoms de l'INE), ${D.n_municipalities} municipis, ${totPop.toLocaleString('ca')}
   persones, amb els seus propis límits (secret &lt;5 per poble; la llista ve del cens nacional de l'INE, cognoms ≥20 a Espanya). Aquestes
   són les conclusions que aguanten els números.</p>
@@ -254,7 +254,7 @@ function buildConclusions(){
     milers de persones).</li>
     <li>El resultat interessant és el <b>contrast</b>: sense filtre, cap geografia; amb filtre, geografia clara.
     Prova que la homogeneïtat aparent dels cognoms moderns és, en bona part, la <b>capa immigrant compartida</b>.</li>
-    <li>Segueix sent <b>exploratori</b>: els límits (cens de partida = cognoms ≥20 a Espanya, secret &lt;5 per poble,
+    <li>Els límits (cens de partida = cognoms ≥20 a Espanya, secret &lt;5 per poble,
     contaminació d'immigració recent) s'han de mantenir a la vista i no permeten afirmacions demogràfiques
     fortes, sinó una tendència ben fonamentada.</li>
   </ul>`;
@@ -557,7 +557,7 @@ function buildMDS(){
 function buildMethod(){
   const cov=Object.values(D.coverage);
   document.getElementById("metod-body").innerHTML = `
-    <h2>Metodologia i límits (exploració)</h2>
+    <h2>Metodologia i límits</h2>
     <p class="lead">Prova seriosa de si es pot fer isonímia moderna de Mallorca separant l'estoc
     autòcton (endèmic) de la capa ubiqua/no endèmica, <b>sense lexicon onomàstic</b> i només amb dades obertes.</p>
 
@@ -676,7 +676,7 @@ function buildMethod(){
     = cognoms ≥20 a Espanya, secret &lt;5, contaminació d'immigració recent) són reals i s'han de mantenir a la vista.</p>
     <p class="src">Fonts: INE — API de cognoms (operació APEL: total nacional + taxa per província + taxa per
     municipi) · INE — padró (operació 22, taula 2860) · NGIB/IDEIB (coords) ·
-    OpenStreetMap · Leaflet. Exploració — no integrada al projecte principal.</p>
+    OpenStreetMap · Leaflet.</p>
     <p class="src"><b>Atribució INE (obligatòria):</b> «Elaboración propia con datos extraídos del sitio web del
     INE: www.ine.es».</p>`;
 }
