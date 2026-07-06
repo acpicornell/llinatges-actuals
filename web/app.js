@@ -39,7 +39,7 @@ function buildOrigin(){
   const nCast=Object.values(E).filter(e=>e.origin==="castellà").length;
   const munis=Object.entries(D.muni_origin).sort((a,b)=>CATF(b[1])-CATF(a[1]));
   const th=`<tr><th>municipi</th>`+ORS.map(o=>`<th class="num" style="color:${oc(o)}">${o.split(' ')[0]}</th>`).join("")+`</tr>`;
-  const rows=munis.map(([m,c])=>`<tr><td>${m}</td>`+ORS.map(o=>`<td class="num">${c[o]?Math.round(c[o]*100)+'%':'·'}</td>`).join("")+`</tr>`).join("");
+  const rows=munis.map(([m,c])=>`<tr><td>${m}</td>`+ORS.map(o=>`<td class="num" data-v="${c[o]||0}">${c[o]?Math.round(c[o]*100)+'%':'·'}</td>`).join("")+`</tr>`).join("");
   el.innerHTML=`
     <p>Origen <b>real</b>, <b>només amb dades obertes</b> (sense LLM, sense lexicon). Un cognom és
     <b style="color:${oc('català')}">català</b> (${nCat}) si està <b>concentrat al domini catalanoparlant</b>
@@ -116,12 +116,12 @@ function buildMunis(){
       <span class="k">cobertura <b>${cov!=null?Math.round(cov*100)+'%':'—'}</b></span>
       <span class="k">cognoms visibles <b>${rows.length}</b></span></div>
       <div class="obar" style="margin:6px 0 14px">${obar}</div>`;
-    const body=rows.map(r=>`<tr class="${cls(r.origin)}"><td class="num">${r.rank}</td>
+    const body=rows.map(r=>`<tr class="${cls(r.origin)}"><td class="num" data-v="${r.rank}">${r.rank}</td>
       <td>${r.s.replace(/_/g,' ')}${r.xueta?' '+XUBADGE:''}</td>
-      <td class="num">${r.f.toLocaleString('ca')}</td>
-      <td class="num">${r.pctTop.toFixed(1)}%</td>
-      <td class="num">${r.rate}</td>
-      <td class="num">${nm(r.lq)}</td>
+      <td class="num" data-v="${r.f}">${r.f.toLocaleString('ca')}</td>
+      <td class="num" data-v="${r.pctTop}">${r.pctTop.toFixed(1)}%</td>
+      <td class="num" data-v="${r.rate}">${r.rate}</td>
+      <td class="num" data-v="${r.lq??''}">${nm(r.lq)}</td>
       <td style="color:${oc(r.origin)}">${r.origin}</td></tr>`).join("");
     document.getElementById("mn-panel").innerHTML=head+
       `<table><thead><tr><th class="num">#</th><th>cognom</th><th class="num">freq</th>
@@ -165,7 +165,7 @@ function buildConclusions(){
   const catEx=["FERRER","NEBOT","VIDAL","BONET","MOLL","FUSTER","AMENGUAL"].filter(s=>E[s]);
   const casEx=["GARCIA","MARTINEZ","LOPEZ","FERNANDEZ","GONZALEZ","SANCHEZ"].filter(s=>E[s]);
   const pc=x=>Math.round(x*100)+"%";
-  const arow=r=>`<tr><td>${r.m}</td><td class="num">${r.pop.toLocaleString('ca')}</td><td class="num">${pc(r.au)}</td></tr>`;
+  const arow=r=>`<tr><td>${r.m}</td><td class="num" data-v="${r.pop}">${r.pop.toLocaleString('ca')}</td><td class="num" data-v="${r.au}">${pc(r.au)}</td></tr>`;
 
   document.getElementById("concl-body").innerHTML = `
   <h2>Conclusions</h2>
@@ -374,13 +374,13 @@ function buildEndem(){
   const XUBADGE=`<span class="xu" title="Llinatge de la llista canònica xueta (Forteza). Marca lineatges que INCLOUEN descendents de conversos, no cada portador.">xueta</span>`;
   function render(list){
     return `<table><thead><tr><th>cognom</th><th class="num">Mall.</th>
-      <th class="num">Esp.</th><th class="num">LQ Mall ▾</th><th class="num">LQ Cat</th>
+      <th class="num">Esp.</th><th class="num">LQ Mall</th><th class="num">LQ Cat</th>
       <th class="num">LQ Bal</th><th class="num">LQ Val</th><th>origen</th></tr></thead><tbody>`+
       list.map(r=>`<tr class="${cls(r.origin)}"><td>${r.s.replace(/_/g,' ')}${r.xueta?' '+XUBADGE:''}</td>
-        <td class="num">${r.mall.toLocaleString('ca')}</td>
-        <td class="num">${r.spain!=null?r.spain.toLocaleString('ca'):'—'}</td>
-        <td class="num">${nm(r.lq)}</td><td class="num">${nm(r.lqc)}</td><td class="num">${nm(r.lqb)}</td>
-        <td class="num">${nm(r.lqv)}</td>
+        <td class="num" data-v="${r.mall}">${r.mall.toLocaleString('ca')}</td>
+        <td class="num" data-v="${r.spain??''}">${r.spain!=null?r.spain.toLocaleString('ca'):'—'}</td>
+        <td class="num" data-v="${r.lq??''}">${nm(r.lq)}</td><td class="num" data-v="${r.lqc??''}">${nm(r.lqc)}</td><td class="num" data-v="${r.lqb??''}">${nm(r.lqb)}</td>
+        <td class="num" data-v="${r.lqv??''}">${nm(r.lqv)}</td>
         <td style="color:${oc(r.origin)}">${r.origin}</td></tr>`).join("")+`</tbody></table>`;
   }
   el.innerHTML = `
@@ -680,6 +680,28 @@ function buildMethod(){
     <p class="src"><b>Atribució INE (obligatòria):</b> «Elaboración propia con datos extraídos del sitio web del
     INE: www.ine.es».</p>`;
 }
+
+// --- click a column header to sort its table -------------------------------
+// data-v (raw value) drives the numeric sort; text columns fall back to a
+// Catalan-aware compare. Delegated on document, so it also covers the tables
+// that get re-rendered (municipality browser, endemism search).
+document.addEventListener("click", e=>{
+  const th=e.target.closest("th"); if(!th) return;
+  const table=th.closest("table"), tb=table&&table.tBodies[0]; if(!tb) return;
+  const ci=[...th.parentNode.children].indexOf(th);
+  const asc=th.getAttribute("aria-sort")!=="ascending";
+  [...th.parentNode.children].forEach(h=>h.removeAttribute("aria-sort"));
+  th.setAttribute("aria-sort", asc?"ascending":"descending");
+  const num=tr=>{const c=tr.cells[ci]; if(!c) return NaN;
+    const dv=c.getAttribute("data-v");
+    return parseFloat(dv!=null?dv:c.textContent.replace(/[^0-9.\-]/g,""));};
+  const txt=tr=>{const c=tr.cells[ci]; return c?c.textContent.trim():"";};
+  [...tb.rows].sort((a,b)=>{
+    const na=num(a), nb=num(b);
+    const r=(!isNaN(na)&&!isNaN(nb))?na-nb:txt(a).localeCompare(txt(b),"ca",{numeric:true});
+    return asc?r:-r;
+  }).forEach(tr=>tb.appendChild(tr));
+});
 
 function wireTabs(){
   document.querySelectorAll("#tabs button").forEach(b=>b.addEventListener("click",()=>{

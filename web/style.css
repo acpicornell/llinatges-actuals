@@ -99,6 +99,9 @@ main{flex:1;display:flex;min-height:0}
 table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0}
 th,td{border-bottom:1px solid var(--line);padding:4px 9px;text-align:left}
 th{color:var(--muted);font-weight:600;cursor:pointer;user-select:none}
+th[aria-sort]{color:var(--ink)}
+th[aria-sort="ascending"]::after{content:" ▲";font-size:9px;opacity:.8}
+th[aria-sort="descending"]::after{content:" ▼";font-size:9px;opacity:.8}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 tr.auto td:first-child{color:var(--accent)} tr.cast td:first-child{color:var(--cast)}
 tr.none td:first-child{color:var(--warn)}
