@@ -123,7 +123,7 @@ function buildMunis(){
   const optLocs=[...locs].sort((a,b)=>a.localeCompare(b,"ca"));
   const cls=o=> o==="català"?"auto": o==="castellà"?"cast":"none";
   const nm=v=>v!=null?v:'—';
-  const XUBADGE=`<span class="xu" title="Llinatge de la llista canònica xueta (Forteza). Marca llinatges que INCLOUEN descendents de conversos, no cada portador.">xueta</span>`;
+  const XUBADGE=`<span class="xu" title="«Xueta»: terme d'origen despectiu, avui reapropiat i estàndard. Llinatge de la llista canònica de 15 que INCLOU descendents de conversos jueus mallorquins — no que cada portador ho sigui. Vegeu Metodologia.">xueta</span>`;
   el.innerHTML=`
     <p>Explora la taula <b>completa de cognoms visibles</b> (recompte municipal de l'INE 2025, 1r cognom,
     tots els que tenen ≥5 portadors) d'un municipi: freqüència, taxa per mil habitants, LQ d'endemisme i
@@ -217,6 +217,48 @@ function buildConclusions(){
   const MO=D.muni_origin;
   const mostCat=Object.entries(MO).sort((x,y)=>(y[1]["català"]||0)-(x[1]["català"]||0)).slice(0,5);
   const mostCast=Object.entries(MO).sort((x,y)=>(y[1]["castellà"]||0)-(x[1]["castellà"]||0)).slice(0,5);
+  // --- origin: same population mass, opposite distribution shape ---
+  const byOrigE={};
+  for(const[s,e]of Object.entries(E)){(byOrigE[e.origin]=byOrigE[e.origin]||[]).push([s,e.mall||0]);}
+  const oStruct=o=>{const v=(byOrigE[o]||[]).slice().sort((x,y)=>y[1]-x[1]);
+    const M=v.reduce((s,x)=>s+x[1],0);
+    return {n:v.length, top10:v.slice(0,10).reduce((s,x)=>s+x[1],0)/M,
+      eff:1/v.reduce((s,x)=>s+(x[1]/M)**2,0), bigN:v[0][0], bigM:v[0][1]};};
+  const oCat=oStruct("català"), oCast=oStruct("castellà");
+  const bigRatio=(oCast.bigM/oCat.bigM).toFixed(1).replace('.',',');
+  const effRatio=(oCat.eff/oCast.eff).toFixed(1).replace('.',',');
+  const pc1=x=>(x*100).toFixed(1).replace('.',',')+'%';
+  const d1=x=>x.toFixed(1).replace('.',',');
+  const foreignPct=['europeu','asiàtic','magrebí','subsaharià'].reduce((s,k)=>s+(D.origin_overall[k]||0),0);
+  // --- §6 the xueta collective: descriptive geography of a closed surname set (marca ≠ persona) ---
+  const XU=Object.entries(E).filter(([s,e])=>e.xueta).map(([s,e])=>
+    ({s,mall:e.mall||0,spain:e.spain||0,origin:e.origin,share:e.spain?(e.mall||0)/e.spain:0}));
+  const xuNucleus=XU.filter(x=>x.share>=0.25).sort((a,b)=>b.share-a.share);   // barely exist off-island
+  const xuShared=XU.filter(x=>x.share<0.25).sort((a,b)=>b.mall-a.mall);       // common Spanish surnames
+  const BYS=D.by_surname, islPop=Object.values(POP).reduce((s,x)=>s+x,0);
+  const nucMu={}; let nucTot=0;
+  xuNucleus.forEach(x=>(BYS[x.s]||[]).forEach(([m,f])=>{nucMu[m]=(nucMu[m]||0)+f;nucTot+=f;}));
+  const nucPalma=(nucMu['Palma']||0)/nucTot, palmaIsl=POP['Palma']/islPop;
+  const nucPermil=Object.entries(nucMu).filter(([m,f])=>POP[m]&&f>=15)
+    .map(([m,f])=>({m,pm:f/POP[m]*1000})).sort((a,b)=>b.pm-a.pm).slice(0,6);
+  const nucMunis=Object.values(nucMu).filter(f=>f>0).length;
+  // per-town diversity of the nucleus lineages: established community (many, even) vs single family (one dominates)
+  const nucTown={};
+  xuNucleus.forEach(x=>(BYS[x.s]||[]).forEach(([m,f])=>{(nucTown[m]=nucTown[m]||{})[x.s]=f;}));
+  const xuDiv=Object.entries(nucTown).map(([m,cs])=>{const vals=Object.values(cs),
+    tot=vals.reduce((s,v)=>s+v,0),top=Object.entries(cs).sort((a,b)=>b[1]-a[1])[0];
+    return {m,rich:vals.length,eff:1/vals.reduce((s,v)=>s+(v/tot)**2,0),tot,
+      topShare:top[1]/tot,top:top[0]};}).filter(d=>d.tot>=40&&d.rich>=2);
+  const xuMixed=xuDiv.slice().sort((a,b)=>b.eff-a.eff).slice(0,8);
+  const xuFamily=xuDiv.filter(d=>d.topShare>=0.55).sort((a,b)=>b.topShare-a.topShare);
+  // pool-size-fair evenness (effective/richness, weighted by bearers): xueta lineages vs recent Maghrebi immigration
+  const evennessWtd=surns=>{const tw={};
+    surns.forEach(s=>(BYS[s]||[]).forEach(([m,f])=>{(tw[m]=tw[m]||{})[s]=(tw[m][s]||0)+f;}));
+    let acc=0,W=0; for(const m in tw){const vals=Object.values(tw[m]),tot=vals.reduce((s,v)=>s+v,0);
+      if(tot<40||vals.length<2)continue; const eff=1/vals.reduce((s,v)=>s+(v/tot)**2,0);
+      acc+=(eff/vals.length)*tot; W+=tot;} return acc/W;};
+  const evXu=evennessWtd(xuNucleus.map(x=>x.s));
+  const evMag=evennessWtd(Object.entries(E).filter(([s,e])=>e.origin==='magrebí').map(([s])=>s));
 
   document.getElementById("concl-body").innerHTML = `
   <h2>Conclusions</h2>
@@ -283,14 +325,79 @@ function buildConclusions(){
       ${mostCast.map(([m,c])=>`<tr><td>${m}</td><td class="num">${Math.round((c["castellà"]||0)*100)}%</td></tr>`).join("")}</tbody></table></div>
   </div>
 
-  <h3>5. Origen: una aproximació descriptiva (no toca el resultat)</h3>
-  <p>L'eix català/castellà es construeix a part, en <b>3 capes</b> (mesura INE → marca de forà curada → proxy de
-  concentració) i <b>no entra a cap estadística</b> —la geografia de dalt va tota per endemisme. Per població:
-  <b>~${pc(D.origin_overall["català"])}</b> català · <b>~${pc(D.origin_overall["castellà"])}</b> castellà · la
-  resta forà o sense classificar. «Català» vol dir <b>on es concentra</b> el cognom, no d'on ve. El detall, a
-  les pestanyes <b>Origen</b> i <b>Metodologia</b>.</p>
+  <h3>5. Origen: mateixa massa, estructura oposada</h3>
+  <p>Per població l'illa queda gairebé partida en dos: <b>~${pc(D.origin_overall["català"])}</b> català ·
+  <b>~${pc(D.origin_overall["castellà"])}</b> castellà. Però darrere de l'empat hi ha <b>dues demografies
+  contràries</b> —i és la mateixa moneda que explica tot el que hem vist a dalt.</p>
+  <div class="two">
+    <div><table><thead><tr><th></th><th class="num">català</th><th class="num">castellà</th></tr></thead><tbody>
+      <tr><td>cognoms diferents</td><td class="num">${oCat.n.toLocaleString('ca')}</td><td class="num">${oCast.n.toLocaleString('ca')}</td></tr>
+      <tr><td>% de la població</td><td class="num">${pc(D.origin_overall["català"])}</td><td class="num">${pc(D.origin_overall["castellà"])}</td></tr>
+      <tr><td>els 10 primers = % de la massa</td><td class="num">${pc(oCat.top10)}</td><td class="num">${pc(oCast.top10)}</td></tr>
+      <tr><td>nº <i>efectiu</i> de cognoms</td><td class="num">${Math.round(oCat.eff)}</td><td class="num">${Math.round(oCast.eff)}</td></tr>
+      <tr><td>el més gran</td><td class="num">${cap(oCat.bigN)} ${oCat.bigM.toLocaleString('ca')}</td><td class="num">${cap(oCast.bigN)} ${oCast.bigM.toLocaleString('ca')}</td></tr>
+    </tbody></table></div>
+    <div class="result-box" style="align-self:start">El fons <b>castellà</b> són <b>pocs cognoms i ubics</b>
+    (Garcia, Martínez, López…): els 10 primers ja fan el <b>${pc(oCast.top10)}</b> de tota la seva massa. El
+    <b>català</b> és una <b>cua llarga de cognoms locals</b> —gairebé el doble de llinatges, i el més gran
+    (${cap(oCat.bigN)}) és <b>${bigRatio}×</b> més petit que Garcia. En nombre <i>efectiu</i>, el català és
+    <b>${effRatio}× més divers</b>.</div>
+  </div>
+  <p class="result-box">Això <b>és</b> el mecanisme de la màscara (§2) vist des de l'origen: <b>pocs i plans</b>
+  esborren la geografia, una <b>cua llarga de locals</b> la sosté. La composició d'origen i el resultat
+  d'isonímia no són dos fets: són <b>la mateixa moneda</b>.</p>
+  <p>L'eix es construeix a part, en <b>3 capes</b> (mesura INE → marca de forà curada → proxy de concentració) i
+  <b>no entra a cap estadística</b> —la geografia de dalt va tota per endemisme. «Català» vol dir <b>on es
+  concentra</b> el cognom, no d'on ve. La <b>immigració recent</b> (marca de forà, capa 2) és el
+  <b>${pc1(foreignPct)}</b> de la població: europeu ${pc1(D.origin_overall["europeu"])} · asiàtic
+  ${pc1(D.origin_overall["asiàtic"])} · magrebí ${pc1(D.origin_overall["magrebí"])} · subsaharià
+  ${pc1(D.origin_overall["subsaharià"])}. El detall, a les pestanyes <b>Origen</b> i <b>Metodologia</b>.</p>
 
-  <h3>6. Límits honestos</h3>
+  <h3>6. Un col·lectiu de contorn net: els llinatges xuetes</h3>
+  <p>Rarament la demografia ofereix un col·lectiu tan <b>ben delimitat</b>: 15 cognoms fixats fa segles pels
+  processos inquisitorials. Aquí <b>no</b> fem estadística sobre persones —la marca assenyala <b>llinatges, no
+  portadors</b>, i <b>no entra a cap càlcul</b> d'isonímia—; només mirem <b>com es distribueixen aquests
+  cognoms</b> avui. Diuen dues coses.</p>
+  <p><b>a) La llista de 15 són, de fet, dues llistes.</b> Quin % de tots els portadors d'Espanya viu a Mallorca:</p>
+  <div class="two">
+    <div><table><thead><tr><th>Nucli gairebé exclusiu</th><th class="num">% a Mall.</th></tr></thead><tbody>
+      ${xuNucleus.map(x=>`<tr><td>${cap(x.s)}</td><td class="num">${Math.round(x.share*100)}%</td></tr>`).join("")}
+    </tbody></table></div>
+    <div><table><thead><tr><th>Cognoms compartits</th><th class="num">% a Mall.</th></tr></thead><tbody>
+      ${xuShared.map(x=>`<tr><td>${cap(x.s)}${x.origin==='castellà'?' <span class="ns">castellà</span>':''}</td><td class="num">${Math.round(x.share*100)}%</td></tr>`).join("")}
+    </tbody></table></div>
+  </div>
+  <p class="result-box">El <b>nucli</b> (Forteza, Bonnín, Aguiló…) <b>gairebé no existeix fora de Mallorca</b>: són
+  els cognoms xuetes en sentit estricte. Els <b>compartits</b> (Cortès, Segura, Martí, Valls…) són cognoms
+  espanyols corrents on la branca xueta és una <b>minoria</b> —Cortès surt fins i tot «castellà». Això és,
+  <b>mesurat</b>, per què la marca diu «llinatges que <i>inclouen</i> conversos, <b>no</b> que cada portador ho
+  sigui».</p>
+  <p><b>b) Palma, sí, però no un gueto.</b> Sobre el nucli exclusiu: <b>${pc(nucPalma)}</b> viu a Palma (l'illa
+  és ${pc(palmaIsl)} Palma) —sobrerepresentació <b>modesta</b>, ressò del històric <b>Carrer de l'Argenteria</b>
+  dels argenters. Per càpita, el senyal fort és a pobles concrets: ${nucPermil.map(x=>`<b>${x.m}</b> ${d1(x.pm)}‰`).join(" · ")}.
+  Present a <b>${nucMunis}/${D.n_municipalities}</b> municipis: avui està <b>escampat</b>, no reclòs.</p>
+  <p><b>c) Comunitat, no família: la diversitat de llinatges.</b> Comptem quants dels llinatges del nucli
+  <b>conviuen</b> a cada poble i com de <b>repartits</b> estan (nº <i>efectiu</i>): molts i barrejats = comunitat
+  arrelada; gairebé tot un sol cognom = una família.</p>
+  <div class="two">
+    <div><table><thead><tr><th>Més diversitat xueta</th><th class="num">llinatges</th><th class="num">nº&nbsp;efectiu</th></tr></thead><tbody>
+      ${xuMixed.map(d=>`<tr><td>${d.m}</td><td class="num">${d.rich}</td><td class="num">${d1(d.eff)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="result-box" style="align-self:start">A <b>Palma</b> hi conviuen <b>els 6</b> llinatges del nucli,
+    i a Manacor o Marratxí 5, ben repartits: <b>comunitats</b> de fons antic. On gairebé tot és un sol cognom
+    —<b>${xuFamily[0].m}</b> (${Math.round(xuFamily[0].topShare*100)}% ${cap(xuFamily[0].top)})${xuFamily[1]?`, ${xuFamily[1].m} (${Math.round(xuFamily[1].topShare*100)}% ${cap(xuFamily[1].top)})`:''}—
+    és més aviat una <b>família</b>.</div>
+  </div>
+  <p>És el patró <b>contrari</b> al d'un assentament recent, que sol arribar concentrat en <b>pocs cognoms
+  fundadors</b>. Mesurant com d'<b>uniformement</b> es reparteixen els portadors entre els cognoms d'un mateix
+  grup a cada poble (1 = repartiment perfecte, independent de quants cognoms tingui el grup), els llinatges
+  xuetes donen <b>${n2(evXu)}</b> i la immigració magrebina <b>${n2(evMag)}</b>: el fons xueta és una <b>vella
+  soca barrejada</b> entre moltes cases, no un grapat de famílies fundadores.</p>
+  <p class="hint" style="color:var(--muted)">Valleriola, un dels 15, ni apareix —cau sota el llindar ≥20 a
+  Espanya de l'INE; és un llinatge gairebé extint. Tot això descriu la distribució dels <b>cognoms</b>, no fa
+  cap afirmació sobre les persones que els porten avui.</p>
+
+  <h3>7. Límits honestos</h3>
   <ul>
     <li><b>Tot sobre el recompte municipal de l'INE</b> (taxa‰ × padró, ≥5 per poble; reconstrucció exacta). La
     llista de partida és el <b>cens nacional de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')} cognoms ≥20 a
@@ -328,7 +435,7 @@ function applySurname(query){
   if(!matched.length){ box.innerHTML=`<p class="none">Cap cognom «${query}» al cens de 2025 (els ${D.all.n_surnames.toLocaleString('ca')} del cens de cognoms de l'INE).</p>`; return; }
   const heads=matched.map(sn=>{const e=D.endemism[sn];
     const kind=e.origin==='català'?'auto':e.origin==='castellà'?'cast':'none';
-    return `<span class="sn ${kind}">${sn.replace(/_/g,' ')}</span>${e.xueta?' <span class="xu" title="Llinatge de la llista canònica xueta (marca llinatges que inclouen descendents de conversos, no cada portador)">xueta</span>':''} <span class="lqv">LQ ${e.lq??'—'}</span> · ${e.mall.toLocaleString('ca')}${basisTag(e)}`;
+    return `<span class="sn ${kind}">${sn.replace(/_/g,' ')}</span>${e.xueta?' <span class="xu" title="«Xueta»: terme d\'origen despectiu, avui reapropiat i estàndard. Llinatge de la llista canònica de 15 que inclou descendents de conversos, no que cada portador ho sigui.">xueta</span>':''} <span class="lqv">LQ ${e.lq??'—'}</span> · ${e.mall.toLocaleString('ca')}${basisTag(e)}`;
   }).join("<br>");
   const munis=Object.entries(muniFreq).sort((a,b)=>b[1]-a[1])
     .map(([m,f])=>`<div class="mrow"><span class="mn">${m}</span><span class="mf">${f}</span></div>`).join("");
@@ -415,7 +522,7 @@ function buildEndem(){
     lqc:e.lq_cat,lqb:e.lq_bal,lqv:e.lq_val,cs:e.cat_score,origin:e.origin,xueta:e.xueta,basis:e.origin_basis}));
   const cls=o=> o==="català"?"auto": o==="castellà"?"cast":"none";
   const nm=v=>v!=null?v:'—';
-  const XUBADGE=`<span class="xu" title="Llinatge de la llista canònica xueta (Forteza). Marca llinatges que INCLOUEN descendents de conversos, no cada portador.">xueta</span>`;
+  const XUBADGE=`<span class="xu" title="«Xueta»: terme d'origen despectiu, avui reapropiat i estàndard. Llinatge de la llista canònica de 15 que INCLOU descendents de conversos jueus mallorquins — no que cada portador ho sigui. Vegeu Metodologia.">xueta</span>`;
   function render(list){
     return `<table><thead><tr><th>cognom</th><th class="num">Mall.</th>
       <th class="num">Esp.</th><th class="num">LQ Mall</th><th class="num">LQ Cat</th>
@@ -459,12 +566,12 @@ function buildEndem(){
     mallorquí endèmic (LQ Mall alt, absents de Catalunya). Es marquen <b>magrebí</b> amb una llista curada
     (l'INE per nacionalitat només en publica el top-20); <b>no</b> es confonen amb els d'ètim andalusí ja
     establerts fa segles (Bennàssar, Binimelis), que són autòctons.</div>
-    <div class="caveat"><span class="xu">xueta</span> <b>Marca històrica, no estadística.</b> Marca els cognoms
-    de la <b>llista canònica de 15 llinatges xuetes</b> (descendents dels conversos jueus mallorquins, fixada
-    per M. Forteza): Aguiló, Bonnín, Cortès, Fortesa, Fuster, Martí, Miró, Picó, Pinya, Pomar, Segura, Tarongí,
-    Valentí, Valleriola, Valls. És <b>ortogonal</b> a català/castellà (són cognoms catalans). <b>Important:</b>
-    marca llinatges que <b>inclouen</b> descendents de conversos, <b>no</b> que cada portador ho sigui — hi ha
-    Fuster, Martí, Miró, Pomar <b>no</b> xuetes. Font: Forteza / Viquipèdia.</div>
+    <div class="caveat"><span class="xu">xueta</span> <b>Marca històrica, no estadística.</b> Marca els 15
+    llinatges canònics descendents dels conversos jueus mallorquins (Aguiló, Bonnín, Cortès, Fortesa, Fuster,
+    Martí, Miró, Picó, Pinya, Pomar, Segura, Tarongí, Valentí, Valleriola, Valls). <b>No</b> entra a cap
+    estadística i és <b>ortogonal</b> a català/castellà. Marca llinatges que <b>inclouen</b> descendents de
+    conversos, <b>no</b> que cada portador ho sigui. El terme, la seva història i els límits: a la pestanya
+    <b>Metodologia</b>.</div>
     <div class="mn-bar"><input id="eq" type="search" style="flex:1;min-width:200px;margin:0"
       placeholder="cerca un cognom… (p.ex. Garcia, Ferrer, Amengual)">
       <button class="dl" id="en-dl">Baixar taula de cognoms (CSV)</button></div>
@@ -758,6 +865,29 @@ function buildMethod(){
     <p>El mètode <b>funciona</b> per a una avaluació exploratòria: amb dades obertes i sense inventar res,
     aïlla el fons autòcton i en revela l'estructura geogràfica (r≈${D.auto.mantel.r}). Els límits (cens de partida
     = cognoms ≥20 a Espanya, secret &lt;5, contaminació d'immigració recent) són reals i s'han de mantenir a la vista.</p>
+
+    <h3>6. La marca xueta</h3>
+    <p>El navegador marca amb <span class="xu">xueta</span> els cognoms de la <b>llista canònica de 15
+    llinatges</b> descendents dels conversos jueus mallorquins, fixada per Miquel <b>Forteza</b> (<i>Els
+    descendents dels jueus conversos de Mallorca</i>): <b>Aguiló, Bonnín, Cortès, Fortesa, Fuster, Martí, Miró,
+    Picó, Pinya, Pomar, Segura, Tarongí, Valentí, Valleriola, Valls</b>. La consciència col·lectiva d'aquest
+    origen s'ha conservat justament pel fet de portar aquests cognoms, marcats pels processos de la Inquisició
+    per criptojudaisme de finals del s. XVII.</p>
+    <p><b>Sobre el terme.</b> «Xueta» és d'<b>origen despectiu</b>: se'n donen dues etimologies —de <i>juetó</i>
+    ('jueuet', diminutiu de jueu) o de <i>xulla</i> (cansalada/porc), per la burla que els conversos no en
+    menjaven. Els insults <i>xuetó, xuetona, xuetarro</i> i l'acusació de deïcidi van perseguir els portadors
+    dels quinze llinatges durant tres segles. Per això la mateixa gent afectada preferia autoanomenar-se amb
+    noms neutres —<b>«del carrer», «del Segell», «es nostros»</b> (per oposició a «es de fora del carrer»).
+    Avui, però, «xueta» és el <b>terme reapropiat i estàndard</b>: l'usen la historiografia, la Viquipèdia i la
+    mateixa comunitat, i el va emprar Forteza, xueta ell mateix i font d'aquesta llista. La qüestió xueta a
+    Mallorca es considera avui socialment superada.</p>
+    <p><b>Què marca i què no.</b> És una marca <b>històrica, no estadística</b>: <b>no entra a cap càlcul</b>
+    (isonímia, Mantel, endemisme) i és <b>ortogonal</b> a l'eix català/castellà —tots quinze són cognoms
+    catalans. I marca llinatges que <b>inclouen</b> descendents de conversos, <b>no</b> que cada portador ho
+    sigui: cognoms com Fuster, Martí, Miró o Pomar tenen moltes branques <b>no</b> xuetes. És context, no un
+    veredicte sobre ningú.</p>
+    <p class="src">Font de la marca: M. Forteza / Viquipèdia.</p>
+
     <p class="src">Fonts: INE — API de cognoms (operació APEL: total nacional + taxa per província + taxa per
     municipi) · INE — padró (operació 22, taula 2860) · NGIB/IDEIB (coords) ·
     OpenStreetMap · Leaflet.</p>
