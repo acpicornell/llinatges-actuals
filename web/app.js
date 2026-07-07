@@ -62,21 +62,21 @@ function buildOrigin(){
     gent amb cada cognom, <b>no</b> d'on ve. Fem servir aquesta geografia com a <b>aproximació</b> d'origen. Per
     tant <b>«català» = on es concentra, no d'on prové</b> el cognom — i <b>res d'aquesta pestanya afecta els
     resultats de l'estudi</b> (la isonímia i l'aïllament per distància van per endemisme, no per origen).</p>
-    <h3 class="osub" style="margin-top:4px">Com decidim l'origen: 3 nivells, del més sòlid al més fluix</h3>
+    <h3 class="osub" style="margin-top:4px">Com decidim l'origen: 3 capes, de la més sòlida a la més fluixa</h3>
     <div class="layers3">
       <div class="concept" style="border-left-color:#6aa9d0">
-        <h4><span>1 · El que mesura l'INE</span><span class="lstat" style="color:#6aa9d0">mesurat</span></h4>
+        <h4><span>Capa 1 · El que mesura l'INE</span><span class="lstat" style="color:#6aa9d0">mesurat</span></h4>
         <p>On es concentra el cognom (Mallorca vs Espanya i per província). <b>Dada pura de l'INE</b>, qualsevol la
-        refà igual. És la base dels dos nivells de sota — encara no diu «català» ni «castellà».</p>
+        refà igual. És la base de les dues capes de sota — encara no diu «català» ni «castellà».</p>
       </div>
       <div class="concept" style="border-left-color:var(--warn)">
-        <h4><span>2 · Immigració recent</span><span class="lstat" style="color:var(--warn)">${(nNac+nCur).toLocaleString('ca')} cognoms</span></h4>
+        <h4><span>Capa 2 · Immigració recent</span><span class="lstat" style="color:var(--warn)">${(nNac+nCur).toLocaleString('ca')} cognoms</span></h4>
         <p><b>${nNac.toLocaleString('ca')}</b> surten a les llistes de nacionalitat de l'INE; <b>${nCur.toLocaleString('ca')}</b>
         els afegim <b>a mà</b> (l'INE talla pel top-20 de cada país). D'aquests <b>sí</b> sabem que són d'arribada
         recent — si no, la geografia els diria «català» per error.</p>
       </div>
       <div class="concept" style="border-left-color:var(--accent)">
-        <h4><span>3 · Català o castellà</span><span class="lstat" style="color:var(--accent)">aproximació</span></h4>
+        <h4><span>Capa 3 · Català o castellà</span><span class="lstat" style="color:var(--accent)">aproximació</span></h4>
         <p>La resta: concentrat a les <b>terres de parla catalana</b> → <b style="color:${oc('català')}">català</b> (${nCat});
         si no → <b style="color:${oc('castellà')}">castellà</b> (${nCast}); si no es pot decidir →
         <b>sense classificar</b> (${nUnd.toLocaleString('ca')}). Recorda: és <b>on viu</b> la gent, no d'on ve el cognom.</p>
@@ -348,7 +348,7 @@ function buildConclusions(){
   d'isonímia no són dos fets: són <b>la mateixa moneda</b>.</p>
   <p>L'eix es construeix a part, en <b>3 capes</b> (mesura INE → marca de forà curada → proxy de concentració) i
   <b>no entra a cap estadística</b> —la geografia de dalt va tota per endemisme. «Català» vol dir <b>on es
-  concentra</b> el cognom, no d'on ve. La <b>immigració recent</b> (marca de forà, capa 2) és el
+  concentra</b> el cognom, no d'on ve. La <b>immigració recent</b> (marca de forà, Capa 2) és el
   <b>${pc1(foreignPct)}</b> de la població: europeu ${pc1(D.origin_overall["europeu"])} · asiàtic
   ${pc1(D.origin_overall["asiàtic"])} · magrebí ${pc1(D.origin_overall["magrebí"])} · subsaharià
   ${pc1(D.origin_overall["subsaharià"])}. El detall, a les pestanyes <b>Origen</b> i <b>Metodologia</b>.</p>
@@ -882,10 +882,11 @@ function buildMethod(){
     mateixa comunitat, i el va emprar Forteza, xueta ell mateix i font d'aquesta llista. La qüestió xueta a
     Mallorca es considera avui socialment superada.</p>
     <p><b>Què marca i què no.</b> És una marca <b>històrica, no estadística</b>: <b>no entra a cap càlcul</b>
-    (isonímia, Mantel, endemisme) i és <b>ortogonal</b> a l'eix català/castellà —tots quinze són cognoms
-    catalans. I marca llinatges que <b>inclouen</b> descendents de conversos, <b>no</b> que cada portador ho
-    sigui: cognoms com Fuster, Martí, Miró o Pomar tenen moltes branques <b>no</b> xuetes. És context, no un
-    veredicte sobre ningú.</p>
+    (isonímia, Mantel, endemisme) i és <b>ortogonal</b> a l'eix català/castellà —són cognoms d'arrel catalana,
+    per bé que algun de compartit i corrent arreu (Cortès) el proxy de concentració el llegeixi «castellà»:
+    recorda que aquell eix mesura <b>on es concentra</b> el cognom, no d'on ve. I marca llinatges que
+    <b>inclouen</b> descendents de conversos, <b>no</b> que cada portador ho sigui: cognoms com Fuster, Martí,
+    Miró o Pomar tenen moltes branques <b>no</b> xuetes. És context, no un veredicte sobre ningú.</p>
     <p class="src">Font de la marca: M. Forteza / Viquipèdia.</p>
 
     <p class="src">Fonts: INE — API de cognoms (operació APEL: total nacional + taxa per província + taxa per
