@@ -94,6 +94,13 @@ Helpers: `src/muni_ids.py` (INE contour region-id → town), `src/screen_foreign
 - Origin by population: **≈ 46 % català · 49 % castellà · 3.6 % foreign · 1.1 % sense classificar**
   (the low-frequency floor left the rare undetermined tail out of "català").
 - Endemic set = 997 surnames (LQ ≥ 1.3, ≥ 20 bearers, non-foreign).
+- The isolation-by-distance MAPS but does not carve clean comarques: cutting the endemic isonymy
+  tree gives one big connected core (~28 munis) plus a couple of distinct pockets — the **Sóller
+  valley** (Sóller, Fornalutx, Deià, Valldemossa) and a **Llevant-Migjorn** band. Stored per town as
+  `auto.region` in the JSON (a `fcluster` k=6 cut of the same tree; descriptive, feeds no statistic).
+- Surname coverage is long-tailed: top ~31 surnames = 25 % of bearers, ~164 = 50 %, ~2,066 = 90 %.
+  Random-isonymy inbreeding F = Rii_unb/4 (Crow & Mange) spans ~123× — Llubí ~2.5×10⁻³ (interior,
+  closed) down to Calvià ~0.02×10⁻³ (coastal, open); computed live in the web from `auto.Rii_unb`.
 
 ## Status / backlog
 

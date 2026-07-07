@@ -276,6 +276,27 @@ function buildConclusions(){
   const magDom=Object.entries(magTown).map(([m,cs])=>{const vals=Object.values(cs),tot=vals.reduce((a,b)=>a+b,0),
     top=Object.entries(cs).sort((a,b)=>b[1]-a[1])[0];return {m,tot,topShare:top[1]/tot,top:top[0]};})
     .filter(d=>d.tot>=40&&Object.keys(magTown[d.m]).length>=2).sort((a,b)=>b.topShare-a.topShare);
+  // --- §3 shape of the map: surname coverage, regions, twin/lonely towns ---
+  const masses=Object.values(E).map(e=>e.mall||0).sort((a,b)=>b-a);
+  const totMassAll=masses.reduce((s,x)=>s+x,0);
+  const covN=p=>{let c=0;for(let i=0;i<masses.length;i++){c+=masses[i];if(c>=p*totMassAll)return i+1;}return masses.length;};
+  const cov25=covN(0.25), cov50=covN(0.5), cov90=covN(0.9);
+  const REG=D.auto.region, regG={};
+  Object.entries(REG).forEach(([t,c])=>{(regG[c]=regG[c]||[]).push(t);});
+  const regSize=Object.entries(regG).sort((a,b)=>b[1].length-a[1].length);
+  const coreN=regSize[0][1].length;                       // biggest cluster = the mixed core
+  const sollerReg=(regG[REG['Sóller']]||[]).slice().sort();
+  const llevantReg=regG[REG['Manacor']]||[];
+  const isolates=regSize.filter(([,ts])=>ts.length===1).map(([,ts])=>ts[0]);
+  const LK=D.auto.lasker, LKl=D.auto.locs;
+  const lval=(i,j)=>(LK[i][j]+LK[j][i])/2;
+  let lpairs=[];
+  for(let i=0;i<LKl.length;i++)for(let j=i+1;j<LKl.length;j++)lpairs.push([lval(i,j),LKl[i],LKl[j]]);
+  lpairs.sort((a,b)=>a[0]-b[0]);
+  const twins=lpairs.slice(0,3);
+  const neighbourPair=lpairs.find(([,a,b])=>(a==='Manacor'&&b==='Sant Llorenç des Cardassar')||(b==='Manacor'&&a==='Sant Llorenç des Cardassar'));
+  const lonely=LKl.map((t,i)=>({t,d:LKl.reduce((s,_,j)=>s+(i===j?0:lval(i,j)),0)/(LKl.length-1)}))
+    .sort((a,b)=>b.d-a.d)[0];
 
   document.getElementById("concl-body").innerHTML = `
   <h2>Conclusions</h2>
@@ -318,7 +339,26 @@ function buildConclusions(){
   <p class="hint" style="color:var(--muted)">Comprovat a part: l'arbre d'isonímia de l'estrat <b>no endèmic</b>
   dona r=${ne.r}, p=${ne.p} → cap estructura per distància. La geografia viu <b>només</b> a el fons autòcton.</p>
 
-  <h3>3. Els cognoms més mallorquins, i els pobles que en són «capital»</h3>
+  <h3>3. La forma del mapa: quants cognoms, quines regions, quins veïns</h3>
+  <p><b>Quants cognoms fan Mallorca?</b> Molt pocs en fan el gruix i una cua immensa fa la resta: els
+  <b>${cov25}</b> cognoms més comuns ja són <b>una quarta part</b> de tothom, i amb <b>${cov50}</b> ja tens
+  <b>mig</b> Mallorca —però en calen <b>${cov90.toLocaleString('ca')}</b> per arribar al 90%, dins un cens de
+  ${D.all.n_surnames.toLocaleString('ca')}. Tot i això, <b>4 de cada 10</b> (${pc(meanAuto)} de la població)
+  encara porten un cognom <b>arrelat a l'illa</b> (endèmic): aquest fons és el que dibuixa la geografia.</p>
+  <p><b>Es veu al mapa?</b> Si aïllem el fons autòcton i deixem que els cognoms agrupin els pobles (arbre
+  d'isonímia, el mateix de la pestanya MDS), Mallorca <b>no</b> es parteix en comarques nítides: surt <b>un gran
+  nucli connectat</b> (${coreN} dels ${D.n_municipalities} municipis: Palma, el Raiguer, el nord) i, ben
+  separades, <b>un parell de bosses</b>. La més neta és la <b>vall de Sóller</b> —${sollerReg.join(', ')}—,
+  aïllada rere la Serra; i una <b>banda de Llevant-Migjorn</b> (${llevantReg.slice(0,6).join(', ')}…). L'aïllament
+  per distància és, doncs, un <b>gradient amb algunes illes</b>, no fronteres.</p>
+  <p><b>Veïns i solitaris.</b> Els pobles amb els cognoms <b>més bessons</b> són els de la corona de Palma
+  (${twins[0][1]} ~ ${twins[0][2]}, Lasker ${n2(twins[0][0])}), que comparteixen el mateix fons; però
+  l'estructura també aparella <b>veïns de debò</b>: <b>${neighbourPair?neighbourPair[1]+' ~ '+neighbourPair[2]:'Manacor ~ Sant Llorenç des Cardassar'}</b>,
+  que de fet <b>eren un sol poble</b> fins que Sant Llorenç se'n va separar (1892). A l'altre extrem,
+  <b>${lonely.t}</b> és el poble <b>més sol de l'illa</b>: el seu perfil de cognoms és el més diferent de tots
+  els altres.</p>
+
+  <h3>4. Els cognoms més mallorquins, i els pobles que en són «capital»</h3>
   <p><b>Els més exclusivament mallorquins</b> — quin % de tots els portadors d'Espanya viuen a Mallorca:</p>
   <p style="line-height:2.1">${mostMall.map(x=>`<span class="pill" style="border-color:${oc('català')};color:var(--ink)">${cap(x.s)} <b>${Math.round(x.share*100)}%</b></span>`).join(" ")}</p>
   <p class="hint" style="color:var(--muted)">Concentrats desenes de vegades més a l'illa que la mitjana espanyola:
@@ -332,7 +372,7 @@ function buildConclusions(){
     persones porten el cognom <b>${cap(mono[0].sn)}</b> de primer. Aquests llinatges gairebé <i>són</i> el poble.</div>
   </div>
 
-  <h3>4. El mapa de la immigració del segle XX</h3>
+  <h3>5. El mapa de la immigració del segle XX</h3>
   <p>La composició d'origen (descriptiva, per concentració) dibuixa net l'onada migratòria: els municipis
   <b>costaners i turístics</b> són els més castellans; l'<b>interior</b>, els més catalans.</p>
   <div class="two">
@@ -342,7 +382,7 @@ function buildConclusions(){
       ${mostCast.map(([m,c])=>`<tr><td>${m}</td><td class="num">${Math.round((c["castellà"]||0)*100)}%</td></tr>`).join("")}</tbody></table></div>
   </div>
 
-  <h3>5. Origen: mateixa massa, estructura oposada</h3>
+  <h3>6. Origen: mateixa massa, estructura oposada</h3>
   <p>Per població l'illa queda gairebé partida en dos: <b>~${pc(D.origin_overall["català"])}</b> català ·
   <b>~${pc(D.origin_overall["castellà"])}</b> castellà. Però darrere de l'empat hi ha <b>dues demografies
   contràries</b> —i és la mateixa moneda que explica tot el que hem vist a dalt.</p>
@@ -370,7 +410,7 @@ function buildConclusions(){
   ${pc1(D.origin_overall["asiàtic"])} · magrebí ${pc1(D.origin_overall["magrebí"])} · subsaharià
   ${pc1(D.origin_overall["subsaharià"])}. El detall, a les pestanyes <b>Origen</b> i <b>Metodologia</b>.</p>
 
-  <h3>6. Un col·lectiu de contorn net: els llinatges xuetes</h3>
+  <h3>7. Un col·lectiu de contorn net: els llinatges xuetes</h3>
   <p>Rarament la demografia ofereix un col·lectiu tan <b>ben delimitat</b>: 15 cognoms fixats fa segles pels
   processos inquisitorials. Aquí <b>no</b> fem estadística sobre persones —la marca assenyala <b>llinatges, no
   portadors</b>, i <b>no entra a cap càlcul</b> d'isonímia—; només mirem <b>com es distribueixen aquests
@@ -414,7 +454,7 @@ function buildConclusions(){
   Espanya de l'INE; és un llinatge gairebé extint. Tot això descriu la distribució dels <b>cognoms</b>, no fa
   cap afirmació sobre les persones que els porten avui.</p>
 
-  <h3>7. L'altre extrem: la signatura de la immigració recent</h3>
+  <h3>8. L'altre extrem: la signatura de la immigració recent</h3>
   <p>Si el col·lectiu xueta mostra com es veu una <b>soca establerta de fa segles</b>, la immigració <b>recent</b>
   dibuixa la signatura contrària —i és, alhora, <b>on el cens veu menys</b>. Ho mirem amb els cognoms
   <b>magrebins</b>, el cas de migració laboral recent més net i mesurable (l'etiqueta «europeu» del cens barreja
@@ -433,7 +473,7 @@ function buildConclusions(){
   ${Math.round(magDom[1].topShare*100)}% ${cap(magDom[1].top)}. Fins i tot es veu la fragmentació per
   <b>transliteració</b>: <i>Zouggaghi</i> i <i>Zougaghi</i> són el mateix cognom escrit de dues maneres —cosa que
   encara infracompta més.</p>
-  <p><b>b) Geografia: al camp, i fuig de Palma.</b> El mirall exacte de la §6: els cognoms xuetes eren Palma i
+  <p><b>b) Geografia: al camp, i fuig de Palma.</b> El mirall exacte de la §7: els cognoms xuetes eren Palma i
   interior urbà; aquests es concentren als <b>pobles agrícoles del Pla</b>. Per càpita, el senyal és fortíssim a
   pobles concrets: ${magPermil.map(x=>`<b>${x.m}</b> ${d1(x.pm)}‰`).join(" · ")}. I <b>Palma només ${pc(magPalma)}</b>
   del grup, quan és el ${pc(POP['Palma']/islPop)} de l'illa: <b>infrarepresentat a la capital</b>, al revés de
@@ -443,7 +483,7 @@ function buildConclusions(){
   pensat per a cognoms ja assentats. La marca d'origen no diu res de ningú: només descriu <b>on viu, avui</b>, la
   gent que porta cada cognom.</p>
 
-  <h3>8. Límits honestos</h3>
+  <h3>9. Límits honestos</h3>
   <ul>
     <li><b>Tot sobre el recompte municipal de l'INE</b> (taxa‰ × padró, ≥5 per poble; reconstrucció exacta). La
     llista de partida és el <b>cens nacional de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')} cognoms ≥20 a
@@ -712,6 +752,12 @@ function buildIso(){
   const a=D.all.mantel,u=D.auto.mantel,c=D.nonend.mantel;
   const autochOf=l=>(D.muni_stats[l]||{autoch:0}).autoch;
   const verdict=m=>m.p<0.05?'<b class="sig">significatiu</b>':'<b class="ns">nul</b>';
+  // random-isonymy inbreeding coefficient F = Rii_unb / 4 (Crow & Mange) per town
+  const RU=D.auto.Rii_unb, POPi=D.municipality_pop, f3=x=>(x*1000).toFixed(2).replace('.',',');
+  const Fr=Object.entries(RU).map(([m,v])=>({m,F:v/4,pop:POPi[m]||0})).filter(x=>x.pop>0);
+  const Fhi=Fr.slice().sort((x,y)=>y.F-x.F).slice(0,6);
+  const Flo=Fr.slice().sort((x,y)=>x.F-y.F).slice(0,4);
+  const Fisl=Object.values(D.auto.Rii).reduce((s,v)=>s+v,0)/Object.keys(D.auto.Rii).length/4;
   document.getElementById("iso-body").innerHTML = `
     <p>Isonímia de Cavalli-Sforza (R<sub>ii</sub>, distància de Lasker, MDS, arbre UPGMA, Mantel) sobre
     municipis, en <b>tres versions</b> per respondre la pregunta clau: <i>l'estrat no endèmic (ubic), té
@@ -737,7 +783,27 @@ function buildIso(){
     R<sub>ii</sub>/distàncies es calculen sobre els <b>recomptes municipals de l'INE</b> (taxa‰ × padró
     del municipi, cada poble amb ≥5 portadors) i sobre el <b>cens complet de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')}
     cognoms). El Mantel dels autòctons queda en <b>${u.r}</b>, significatiu.
-    Límit que queda: el secret estadístic amaga &lt;5 per poble.</div>`;
+    Límit que queda: el secret estadístic amaga &lt;5 per poble.</div>
+
+    <h3 class="osub">Com de tancat és cada poble? El coeficient d'endogàmia (F)</h3>
+    <p>La isonímia té un número clàssic de genètica de poblacions (Crow &amp; Mange): la <b>isonímia
+    aleatòria</b> —la probabilitat que dues persones a l'atzar del poble comparteixin el 1r cognom— dividida per
+    4 estima el <b>coeficient de consanguinitat (F)</b> del municipi. Com més alt, més <b>tancat</b> ha estat el
+    poble (menys cognoms, més repetits). No és consanguinitat individual: és una <b>signatura històrica</b>
+    d'aïllament que confirma, amb el número estàndard, el que diu la conclusió §2 —com més petit el poble, més
+    tancat.</p>
+    <div class="two">
+      <div><table><thead><tr><th>Més tancats</th><th class="num">F (×10⁻³)</th><th class="num">pob.</th></tr></thead><tbody>
+        ${Fhi.map(x=>`<tr><td>${x.m}</td><td class="num">${f3(x.F)}</td><td class="num">${x.pop.toLocaleString('ca')}</td></tr>`).join("")}
+      </tbody></table></div>
+      <div><table><thead><tr><th>Més oberts</th><th class="num">F (×10⁻³)</th><th class="num">pob.</th></tr></thead><tbody>
+        ${Flo.map(x=>`<tr><td>${x.m}</td><td class="num">${f3(x.F)}</td><td class="num">${x.pop.toLocaleString('ca')}</td></tr>`).join("")}
+      </tbody></table></div>
+    </div>
+    <p class="hint" style="color:var(--muted)">Mitjana de l'illa ≈ ${f3(Fisl)}×10⁻³. <b>${Fhi[0].m}</b>
+    (${f3(Fhi[0].F)}) és ~${Math.round(Fhi[0].F/Flo[0].F)}× més tancat que <b>${Flo[0].m}</b> (${f3(Flo[0].F)}):
+    pobles petits de l'interior a dalt, Palma i la costa turística a baix. F = R<sub>ii</sub> no esbiaixada ÷ 4;
+    valors petits (~10⁻³) i <b>relatius</b>, no consanguinitat literal.</p>`;
 }
 
 // --- MDS tab: the Lasker-distance table projected to an interactive 2D scatter ------------

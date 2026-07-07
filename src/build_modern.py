@@ -382,12 +382,15 @@ def main():
                      "lasker":Dl.round(4).tolist(),
                      "mds":iso.classical_mds(Dl).round(4).tolist(),
                      "pop":{l:int(pop[code_by_name[l]]) for l in locs}}
-        from scipy.cluster.hierarchy import dendrogram
+        from scipy.cluster.hierarchy import dendrogram, fcluster
         Z,_=iso.tree_order(Dl,locs)
         dn=dendrogram(Z,labels=locs,no_plot=True)
         result[tag]["dendro"]={"ivl":dn["ivl"],
             "icoord":[[round(v,2) for v in s] for s in dn["icoord"]],
             "dcoord":[[round(v,4) for v in s] for s in dn["dcoord"]]}
+        # region label per town: cut the same tree into 6 groups. Purely descriptive
+        # (colours the map / names the regions); feeds no statistic.
+        result[tag]["region"]={l:int(c) for l,c in zip(locs,fcluster(Z,6,criterion="maxclust"))}
         # Mantel: isonymic (Lasker) vs geographic distance, located municipalities
         gi=[i for i,l in enumerate(locs) if l in coords]
         if len(gi)>=3:
