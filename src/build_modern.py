@@ -140,6 +140,19 @@ def main():
     for r in dfi.itertuples():
         ine_counts.setdefault(r.surname,{})[r.municipality]=int(r.freq)
 
+    # SECOND-surname census (build_census_2n.py, INE mapaWidget&tipo=2): the maternal-
+    # grandfather surname line, for the biparental isonymy further down. Loaded here so
+    # `counts_for` can build a municipal matrix from it exactly as for the first surname.
+    # Absent file -> biparental block is simply skipped (the first-surname result is unchanged).
+    ine_counts_2n={}
+    try:
+        df2=pd.read_csv(D/"census_muni_2025_2n.csv")[["surname_norm","municipality","freq"]]
+        df2=df2[df2["municipality"].isin(pop)]
+        for r in df2.itertuples():
+            ine_counts_2n.setdefault(r.surname_norm,{})[r.municipality]=int(r.freq)
+    except FileNotFoundError:
+        pass
+
     # NGIB coords + coverage (INE-tracked first-surname mass / padrón population). Coverage is
     # now the share of the town's population whose first surname is in the INE >=20 census.
     coords={}
@@ -333,11 +346,12 @@ def main():
     # into ine_counts / dfi above. IBESTAT only supplied the surname list + population.
     munis=sorted(pop, key=lambda c:-pop[c])
     town_names=[name[c] for c in munis]
-    def counts_for(surset):
+    def counts_for(surset,src=None):
+        src=ine_counts if src is None else src
         cols=sorted(surset)
         M=pd.DataFrame(0,index=town_names,columns=cols)
         for s in surset:
-            for tname,f in ine_counts.get(s,{}).items():
+            for tname,f in src.get(s,{}).items():
                 if tname in M.index:
                     M.at[tname,s]=f
         # drop municipalities left with no surnames
@@ -433,6 +447,64 @@ def main():
             r,p=iso.mantel(Dl[np.ix_(gi,gi)],Dg)
             result[tag]["mantel"]={"r":round(float(r),4),"p":round(float(p),4),"n":len(gi)}
 
+    # ========================================================================
+    # BIPARENTAL isonymy — paternal (1st surname) + maternal-grandfather (2nd surname).
+    #
+    # Population isonymy is built from per-municipality surname MARGINALS, not from
+    # person-level 1st×2nd pairings (we have no name roster), so the two independent
+    # censuses are sufficient: no joint distribution is needed. Three matrices on the
+    # SAME Mallorca-endemic surname set (autoset), because endemism is a property of a
+    # surname whether it sits in someone's paternal or maternal line:
+    #   * "first"    = tipo=1 counts / population              (paternal line; = result["auto"])
+    #   * "second"   = tipo=2 counts / population              (maternal-grandfather line)
+    #   * "combined" = (tipo=1 + tipo=2) counts / (2×population)   (both surname tokens pooled;
+    #                  the field-standard "total isonymy", Rodríguez-Larralde & Barrai)
+    # Plus a cross-Mantel of the paternal-line vs maternal-line Lasker geographies: do the two
+    # surname lines encode the SAME spatial structure? CAVEAT: the national ≥20 frequency file
+    # is a FIRST-surname list, so endemism (autoset) is defined on the paternal line; the
+    # municipal second-surname RATES are genuine INE tipo=2 data, only the endemic *filter* is
+    # borrowed. This block feeds no other statistic; the single-surname results are untouched.
+    def _bip(src,denom_mult):
+        M=counts_for(autoset,src)
+        locs=list(M.index)
+        N=np.array([pop[code_by_name[l]] for l in locs],float).reshape(-1,1)*denom_mult
+        P=M.values/N; R=P@P.T; Dl=iso.lasker_distance(R)
+        block={"locs":locs,"n_surnames":int((M.values.sum(axis=0)>0).sum()),
+               "lasker":Dl.round(4).tolist(),"mds":iso.classical_mds(Dl).round(4).tolist(),
+               "Rii":{l:round(float(R[i,i]),6) for i,l in enumerate(locs)}}
+        gi=[i for i,l in enumerate(locs) if l in coords]
+        if len(gi)>=3:
+            sl=[locs[i] for i in gi]
+            Dg,_=iso.haversine_matrix({l:coords[l] for l in sl})
+            r,p=iso.mantel(Dl[np.ix_(gi,gi)],Dg)
+            block["mantel"]={"r":round(float(r),4),"p":round(float(p),4),"n":len(gi)}
+        return block,Dl,locs
+    biparental=None
+    if ine_counts_2n:
+        ine_counts_comb={}
+        for s in set(ine_counts)|set(ine_counts_2n):
+            d={}
+            for m,f in ine_counts.get(s,{}).items(): d[m]=d.get(m,0)+f
+            for m,f in ine_counts_2n.get(s,{}).items(): d[m]=d.get(m,0)+f
+            ine_counts_comb[s]=d
+        b1,D1,L1=_bip(ine_counts,1)
+        b2,D2,L2=_bip(ine_counts_2n,1)
+        bc,Dc,Lc=_bip(ine_counts_comb,2)
+        agreement=None
+        common=[l for l in L1 if l in set(L2) and l in coords]
+        if len(common)>=3:
+            i1=[L1.index(l) for l in common]; i2=[L2.index(l) for l in common]
+            r,p=iso.mantel(D1[np.ix_(i1,i1)],D2[np.ix_(i2,i2)])
+            agreement={"r":round(float(r),4),"p":round(float(p),4),"n":len(common)}
+        biparental={"first":b1,"second":b2,"combined":bc,"agreement":agreement,
+            "note":("Biparental isonymy on the shared Mallorca-endemic surname set (LQ>=1.3, "
+                    ">=20 bearers, non-foreign; defined on the first-surname national frequencies). "
+                    "first=paternal line (INE tipo=1), second=maternal-grandfather line (tipo=2), "
+                    "combined=both surname tokens pooled and normalised by 2x population. Marginals "
+                    "only; no person-level pairing needed. Second-surname endemism reuses the "
+                    "first-surname national denominator (indicative); the municipal tipo=2 rates are "
+                    "genuine INE data.")}
+
     # LQ threshold sensitivity: autochthonous = non-foreign surnames with LQ>=T.
     # Shows whether the isolation-by-distance result depends on the (arbitrary) cutoff.
     lq_sensitivity=[]
@@ -480,6 +552,7 @@ def main():
          "lq_bands":{"auto":LQ_AUTO,"origin":T_ORIGIN,"val":T_VAL,"mass":MASS_FLOOR,"origin_floor":ORIGIN_FLOOR},
          "lq_sensitivity":lq_sensitivity,
          "topn_convergence":topn_convergence(),
+         "biparental":biparental,
          "municipality_pop":{name[c]:pop[c] for c in munis},
          "coords":{name[c]:coords.get(name[c]) for c in munis},
          "coverage":coverage,
@@ -503,6 +576,13 @@ def main():
     print("Mantel all :",result["all"].get("mantel"))
     print("Mantel auto:",result["auto"].get("mantel"))
     print("Mantel nonend:",result["nonend"].get("mantel"))
+    if biparental:
+        print("BIPARENTAL Mantel — 1st:",biparental["first"].get("mantel"),
+              "| 2nd:",biparental["second"].get("mantel"),
+              "| combined:",biparental["combined"].get("mantel"))
+        print("  line agreement (1st vs 2nd isonymy geography):",biparental["agreement"])
+        print("  n_surnames 1st/2nd/comb:",biparental["first"]["n_surnames"],
+              biparental["second"]["n_surnames"],biparental["combined"]["n_surnames"])
     print("homogeneity:",json.dumps(out["homogeneity"],ensure_ascii=False))
     import statistics as st
     cvs=list(coverage.values())

@@ -36,6 +36,13 @@ Read `README.md` first (sources + pipeline + results).
   INE national ≥20 surname present in Mallorca, from the surname API `mapaWidget&vista=muni`.
   **7,975 surnames × 51 munis, ≈73 % population coverage.** INE's <5-per-town secrecy is
   intrinsic (every published rate reconstructs to ≥5).
+- **Second surname (biparental)** = `data/census_muni_2025_2n.csv` (`build_census_2n.py` from
+  `fetch_ine_endemic_scan_2n.py`, the `tipo=2` twins): the maternal-grandfather surname line,
+  **5,669 surnames × 51 munis, ≈66 % coverage**. `build_modern.py` reads it when present to emit the
+  `biparental` JSON block (skipped if the file is absent → single-surname results unchanged). Population
+  isonymy runs on per-municipality **marginals**, so the two censuses suffice — NO person-level 1st×2nd
+  pairing is needed/claimed. Endemism (the surname *set*) is defined on the first surname and borrowed
+  (the national ≥20 file is first-surname); the municipal `tipo=2` rates are genuine INE data.
 - **Two orthogonal axes** (keep separate):
   - **ENDEMISM** = LQ of a surname in Mallorca vs Spain (drives the isonymy filter). A mass
     floor (freq ≥ 20) removes the tiny-count tail the full census surfaces.
@@ -91,6 +98,11 @@ Helpers: `src/muni_ids.py` (INE contour region-id → town), `src/screen_foreign
 
 - Isolation by distance holds for the autochthonous (Mallorca-endemic) surnames:
   Mantel **r ≈ 0.30, p = 0.0001**, stable across LQ thresholds; full/non-endemic sets ns.
+- **Biparental (`biparental` JSON block):** the second surname (maternal line) alone reproduces IBD
+  (Mantel **r = 0.2477, p = 0.0015**); combined "total isonymy" **r = 0.2805**; and the paternal- vs
+  maternal-line isonymy geographies agree at **r = 0.9129, p = 0.0001** — two independent censuses, same
+  map. The `first` sub-block reproduces `auto` (r = 0.2959) byte-for-byte → plumbing self-check. Surfaced
+  as Methodology §5 with a town-pair agreement scatter (`drawBipScatter`); feeds no other statistic.
 - Origin by population: **≈ 46 % català · 49 % castellà · 3.6 % foreign · 1.1 % sense classificar**
   (the low-frequency floor left the rare undetermined tail out of "català").
 - Endemic set = 997 surnames (LQ ≥ 1.3, ≥ 20 bearers, non-foreign).
@@ -104,9 +116,10 @@ Helpers: `src/muni_ids.py` (INE contour region-id → town), `src/screen_foreign
 
 ## Status / backlog
 
-- **Web copy rewrite pending:** `web/` still narrates the old IBESTAT/top-50 framing; the
-  data (`modern_2025.json`) is already the INE census. Rewrite the copy, drop "top-50",
-  put in the new numbers.
+- **Web copy is on the INE census framing** (the old IBESTAT/top-50 narration is gone): Conclusions
+  §1–9 and Methodology §1–8 reflect the full-census results — origin stack, regions, coverage/Zipf,
+  endogamy F, top-N robustness, and now biparental isonymy (Methodology §5). Keep new numbers in sync
+  with `modern_2025.json` when the pipeline is rerun.
 - Optional: surname spelling-variant merging (e.g. `Matemalas`≈`Matamalas`) — a normalization
   issue, not origin. The medieval repo has a `normalize.py` for the analogous problem.
 - The project was split out of `llinatges-balears/explore/ibestat_modern/` on 2026-07-06;

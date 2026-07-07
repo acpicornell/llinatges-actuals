@@ -55,6 +55,11 @@ they read `data/` and write `web/site_data/` relative to the repo root, so the i
    (to extend the gazetteer by hand; `foreign_review.csv`).
 6. `src/muni_ids.py` — INE contour region-id → Mallorca town resolver (shared by the harvesters).
 
+**Second surname (biparental).** `src/fetch_ine_endemic_scan_2n.py` and `src/build_census_2n.py` are
+`tipo=2` twins of steps 1–2 (the *second* surname = maternal-grandfather line) → `census_muni_2025_2n.csv`
+(**5,669 surnames × 51 municipalities**, ≈66 % coverage). `build_modern.py` reads it, when present, to add
+the biparental isonymy block; without the file it is simply skipped and the single-surname results are unchanged.
+
 ## The two axes (kept orthogonal)
 
 - **Endemism** (drives every statistic): `LQ_Mall = (freq_Mall/pop)/(freq_Spain/pop)`. Pure INE
@@ -77,6 +82,14 @@ they read `data/` and write `web/site_data/` relative to the repo root, so the i
   Mantel **r ≈ 0.30, p = 0.0001**; monotone and stable across LQ thresholds. The full and
   non-endemic sets show no such signal (r ≈ 0.04–0.07, ns) — the structure lives specifically in the
   island-concentrated stock, hidden underneath a shared "ubiquitous" immigrant layer (García, Martínez…).
+- **Both surname lines agree (biparental isonymy).** The INE API also serves the *second* surname
+  (`tipo=2`, the maternal-grandfather line). On the endemic set, the maternal line alone reproduces the
+  same isolation by distance (Mantel **r ≈ 0.25, p = 0.0015**); the combined "total isonymy" gives
+  **r ≈ 0.28**. Crucially, the paternal-line and maternal-line isonymy *geographies* agree at **r ≈ 0.91**
+  (Mantel of the two Lasker matrices) — two independent surname censuses draw the same map, so the signal
+  is not an artefact of the paternal line. Population isonymy uses per-municipality **marginals**, so no
+  person-level 1st×2nd pairing is needed; the second-surname endemism filter is borrowed from the first
+  (the national ≥20 file is first-surname), while the municipal `tipo=2` rates are genuine INE data.
 - **It maps, but not as clean comarques.** Cutting the endemic isonymy tree gives one large connected
   core (~28 munis) plus a couple of distinct pockets — the **Sóller valley** and a **Llevant–Migjorn**
   band. Isolation by distance is a gradient with a few islands, not sharp borders.

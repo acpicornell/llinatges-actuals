@@ -898,8 +898,36 @@ function drawConvergence(tc){
       <text x="${pl+24}" y="${pt+29}" fill="${CC}">correlació amb la matriu completa (eix dret)</text></g>
   </svg>`;
 }
+// biparental agreement: each town-PAIR's Lasker distance on the paternal line (x) vs the
+// maternal-grandfather line (y). A tight diagonal cloud IS the agreement Mantel r — two
+// independent surname censuses drawing the same map. A and B are the two 51×51 Lasker
+// matrices (same town order); r is the agreement correlation for the annotation.
+function drawBipScatter(A,B,r){
+  const n=A.length, pts=[];
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)pts.push([A[i][j],B[i][j]]);
+  const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+  const lo=Math.min(Math.min(...xs),Math.min(...ys)), hi=Math.max(Math.max(...xs),Math.max(...ys));
+  const S=440,pad=52,rp=14,tp=14,iw=S-pad-rp,ih=S-pad-tp-24;
+  const sx=v=>pad+((v-lo)/((hi-lo)||1))*iw, sy=v=>tp+ih-((v-lo)/((hi-lo)||1))*ih;
+  const AC="#6b8cae", MUT="#95a89d";
+  let ax="";
+  for(let t=0;t<=4;t++){const v=lo+(hi-lo)*t/4;
+    ax+=`<text x="${(pad-8).toFixed(1)}" y="${(sy(v)+3).toFixed(1)}" text-anchor="end" fill="${MUT}" font-size="10">${v.toFixed(1).replace('.',',')}</text>`
+      + `<text x="${sx(v).toFixed(1)}" y="${(tp+ih+16).toFixed(1)}" text-anchor="middle" fill="${MUT}" font-size="10">${v.toFixed(1).replace('.',',')}</text>`;}
+  const diag=`<line x1="${sx(lo).toFixed(1)}" y1="${sy(lo).toFixed(1)}" x2="${sx(hi).toFixed(1)}" y2="${sy(hi).toFixed(1)}" stroke="${MUT}" stroke-dasharray="4 4" stroke-opacity=".7"/>`;
+  const dots=pts.map(p=>`<circle cx="${sx(p[0]).toFixed(1)}" cy="${sy(p[1]).toFixed(1)}" r="2.1" fill="${AC}" fill-opacity=".26"/>`).join("");
+  return `<svg viewBox="0 0 ${S} ${S}" style="width:100%;max-width:${S}px;height:auto;margin:6px 0">
+    ${diag}${dots}${ax}
+    <line x1="${pad}" y1="${tp}" x2="${pad}" y2="${(tp+ih).toFixed(1)}" stroke="#ffffff" stroke-opacity=".25"/>
+    <line x1="${pad}" y1="${(tp+ih).toFixed(1)}" x2="${(pad+iw).toFixed(1)}" y2="${(tp+ih).toFixed(1)}" stroke="#ffffff" stroke-opacity=".25"/>
+    <text x="${(pad+iw/2).toFixed(1)}" y="${(tp+ih+38).toFixed(1)}" text-anchor="middle" fill="${MUT}" font-size="11">distància Lasker · línia paterna (1r cognom)</text>
+    <text transform="translate(14,${(tp+ih/2).toFixed(1)}) rotate(-90)" text-anchor="middle" fill="${MUT}" font-size="11">línia materna (2n cognom)</text>
+    <text x="${(pad+iw-4).toFixed(1)}" y="${(tp+16).toFixed(1)}" text-anchor="end" fill="${AC}" font-size="12">r=${String(r).replace('.',',')} · ${(n*(n-1)/2)} parells</text>
+  </svg>`;
+}
 function buildMethod(){
   const cov=Object.values(D.coverage);
+  const B=D.biparental;
   const TC=D.topn_convergence, tcr=n=>(TC.rows.find(r=>r.n===n)||{}).r;
   const d2=x=>x.toFixed(2).replace('.',','), cc=x=>String(x).replace('.',',');
   const tcTable=TC.rows.map(r=>`<tr${r.n===50?' style="color:#e0b070"':''}><td class="num">${r.n||'complet'}</td>`+
@@ -1062,7 +1090,44 @@ function buildMethod(){
     l'endemisme ja classificat (des de les dades nacionals); mesura quants cognoms per poble necessita la
     <b>geometria</b>, no si es podria arrencar tot des de dades truncades —que no es pot.</div>
 
-    <h3>5. Límits honestos (importants)</h3>
+    ${B?`<h3>5. Isonímia biparental: la línia materna confirma el mapa</h3>
+    <p>Fins aquí tot es feia amb el <b>primer cognom</b> (la línia <b>paterna</b>). Però l'API de cognoms de
+    l'INE també serveix el <b>segon cognom</b> (<code>tipo=2</code>) —la línia del <b>avi matern</b>—, i n'hem
+    baixat el cens municipal sencer (${(5669).toLocaleString('ca')} cognoms presents a Mallorca). Amb <b>dues
+    línies independents</b> es pot fer la <b>isonímia biparental</b>, l'estàndard del camp (Rodríguez-Larralde
+    &amp; Barrai) que la versió d'un sol cognom no podia assolir.</p>
+    <p><b>Per què n'hi ha prou amb els marginals.</b> La isonímia de població es calcula sobre les
+    <b>freqüències de cognoms per municipi</b> (els marginals), <b>no</b> sobre parells 1r×2n de persones
+    concretes —no tenim cap llistat de noms, no és una guia telefònica—. Per tant els <b>dos censos separats</b>
+    basten: no cal saber com es combinen dins de cada persona. Es fa servir el <b>mateix conjunt endèmic</b>
+    (l'endemisme és una propietat del cognom, surti a la línia paterna o materna).</p>
+    <table><thead><tr><th>línia</th><th class="num">Mantel r</th><th class="num">p</th>
+      <th class="num" title="cognoms endèmics amb senyal a la línia">cognoms</th></tr></thead>
+      <tbody>
+        <tr><td><b>paterna</b> (1r cognom, <code>tipo=1</code>)</td><td class="num">${cc(B.first.mantel.r)}</td><td class="num">${cc(B.first.mantel.p)}</td><td class="num">${B.first.n_surnames}</td></tr>
+        <tr><td><b>materna</b> (2n cognom, <code>tipo=2</code>)</td><td class="num">${cc(B.second.mantel.r)}</td><td class="num">${cc(B.second.mantel.p)}</td><td class="num">${B.second.n_surnames}</td></tr>
+        <tr style="color:#e0b070"><td><b>combinada</b> (isonímia total)</td><td class="num">${cc(B.combined.mantel.r)}</td><td class="num">${cc(B.combined.mantel.p)}</td><td class="num">${B.combined.n_surnames}</td></tr>
+      </tbody></table>
+    <p><b>La línia materna, tota sola, reprodueix l'aïllament per distància</b> (r=${cc(B.second.mantel.r)},
+    p=${cc(B.second.mantel.p)}). És una mica més feble que la paterna (r=${cc(B.first.mantel.r)}) —normal: el
+    segon cognom està una generació més <b>barrejat</b> i dispers—, però ben significativa. La
+    <b>combinada</b>, agrupant els cognoms de totes dues línies i normalitzant per 2× població, dóna
+    <b>r=${cc(B.combined.mantel.r)}</b>: el número biparental estàndard.</p>
+    <p><b>I la prova de robustesa de debò:</b> comparant la <b>geometria isonímica</b> de la línia paterna amb
+    la de la materna —el Mantel d'una matriu de Lasker contra l'altra— surt <b>r=${cc(B.agreement.r)},
+    p=${cc(B.agreement.p)}</b>. És a dir: <b>dues fonts de dades independents</b> (primer i segon cognom)
+    dibuixen <b>gairebé el mateix mapa</b>. L'aïllament per distància <b>no</b> és un artefacte de la línia
+    paterna; els dos llinatges el confirmen. Cada punt del núvol és un <b>parell de pobles</b>: com més a prop
+    de la diagonal, més coincideixen les dues línies en com de lluny estan aquells dos pobles.</p>
+    ${drawBipScatter(B.first.lasker,B.second.lasker,B.agreement.r)}
+    <div class="caveat"><b>Matís honest.</b> El fitxer nacional de freqüències de l'INE (≥20) és de
+    <b>primer</b> cognom, així que el <b>filtre d'endemisme</b> es defineix sobre la línia paterna i el segon
+    cognom el <b>manlleva</b> (indicatiu). Ara bé, les <b>taxes municipals</b> del segon cognom són dades
+    <b>genuïnes</b> de l'INE (<code>tipo=2</code>): el que es manlleva és només <i>quins</i> cognoms es
+    consideren endèmics, no els seus recomptes. I com tota la resta, això <b>no</b> mou cap altre estadístic
+    —els resultats d'un sol cognom queden intactes.</div>`:''}
+
+    <h3>6. Límits honestos (importants)</h3>
     <ul>
       <li><b>Tot sobre el recompte municipal de l'INE.</b> La isonímia, l'endemisme, la composició
       per municipi i el navegador es calculen sobre els recomptes reconstruïts de l'INE (taxa‰ × padró del
@@ -1080,12 +1145,12 @@ function buildMethod(){
       <li><b>Secret estadístic:</b> municipis &lt;400 hab. exclosos; cua &lt;5 suprimida. <b>Instantània 2025.</b></li>
     </ul>
 
-    <h3>6. Veredicte preliminar</h3>
+    <h3>7. Veredicte preliminar</h3>
     <p>El mètode <b>funciona</b> per a una avaluació exploratòria: amb dades obertes i sense inventar res,
     aïlla el fons autòcton i en revela l'estructura geogràfica (r≈${D.auto.mantel.r}). Els límits (cens de partida
     = cognoms ≥20 a Espanya, secret &lt;5, contaminació d'immigració recent) són reals i s'han de mantenir a la vista.</p>
 
-    <h3>7. La marca xueta</h3>
+    <h3>8. La marca xueta</h3>
     <p>El navegador marca amb <span class="xu">xueta</span> els cognoms de la <b>llista canònica de 15
     llinatges</b> descendents dels conversos jueus mallorquins, fixada per Miquel <b>Forteza</b> (<i>Els
     descendents dels jueus conversos de Mallorca</i>): <b>Aguiló, Bonnín, Cortès, Fortesa, Fuster, Martí, Miró,
