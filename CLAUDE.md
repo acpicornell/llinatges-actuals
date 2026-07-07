@@ -111,3 +111,16 @@ Helpers: `src/muni_ids.py` (INE contour region-id → town), `src/screen_foreign
   issue, not origin. The medieval repo has a `normalize.py` for the analogous problem.
 - The project was split out of `llinatges-balears/explore/ibestat_modern/` on 2026-07-06;
   that old copy may still exist as a backup until confirmed removable.
+- **Possible extension — the rest of the Balearics (Menorca / Eivissa / Formentera).** Deferred
+  (owner said "just curiosity" for now). Feasibility already scoped: our data is Mallorca-only
+  (51 munis); the INE infra already fetches the all-Spain contour (CONTORNOS/19) and we merely
+  filter to Mallorca via `coords_muni.csv`, so extending is INE-only but NOT free — it needs (1)
+  roster+coords for the other islands (NGIB: Menorca 8, Eivissa 5, Formentera 1 munis), (2) their
+  padrón (INE op. 22), (3) a re-harvest of the muni census (`mapaWidget&vista=muni`, ~8k calls),
+  (4) endemism re-based per island. What TRANSFERS robustly: cross-island endogamy F (Menorca/
+  Eivissa almost certainly far more endogamous — F needs no Mantel), island distinctness (Balearic
+  MDS), per-island endemic surnames (Menorca: Pons/Mercadal…; Eivissa: Marí/Tur/Prats…), and the
+  català/castellà origin axis. What does NOT: isolation-by-distance/Mantel (too few munis off
+  Mallorca — Menorca ~8 weak, Eivissa ~5 impossible, Formentera 1); cross-island IBD is trivial
+  (the sea); and the **xueta** overlay is Mallorca-specific. Consider a sibling repo rather than
+  widening this deliberately-"Mallorcan" one.
