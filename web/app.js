@@ -259,6 +259,23 @@ function buildConclusions(){
       acc+=(eff/vals.length)*tot; W+=tot;} return acc/W;};
   const evXu=evennessWtd(xuNucleus.map(x=>x.s));
   const evMag=evennessWtd(Object.entries(E).filter(([s,e])=>e.origin==='magrebí').map(([s])=>s));
+  // --- §7 recent-immigration signature: Maghrebi surnames as the clearest measurable case ---
+  const magE=Object.entries(E).filter(([s,e])=>e.origin==='magrebí');
+  const magSurns=magE.map(([s])=>s), totMass=Object.values(E).reduce((s,e)=>s+(e.mall||0),0);
+  const magMass=magE.reduce((s,[,e])=>s+(e.mall||0),0);
+  const magCur=magE.filter(([,e])=>e.origin_basis==='curated_foreign').length;
+  const magSorted=magE.map(([s,e])=>e.mall||0).sort((a,b)=>b-a);
+  const magEff=1/magE.reduce((s,[,e])=>s+((e.mall||0)/magMass)**2,0);
+  const magTop10=magSorted.slice(0,10).reduce((s,x)=>s+x,0)/magMass;
+  const magMu={}; magSurns.forEach(s=>(BYS[s]||[]).forEach(([m,f])=>{magMu[m]=(magMu[m]||0)+f;}));
+  const magTot=Object.values(magMu).reduce((s,x)=>s+x,0), magPalma=(magMu['Palma']||0)/magTot;
+  const magPermil=Object.entries(magMu).filter(([m,f])=>POP[m]&&f>=40)
+    .map(([m,f])=>({m,pm:f/POP[m]*1000})).sort((a,b)=>b.pm-a.pm).slice(0,6);
+  const magMunis=Object.values(magMu).filter(f=>f>0).length;
+  const magTown={}; magSurns.forEach(s=>(BYS[s]||[]).forEach(([m,f])=>{(magTown[m]=magTown[m]||{})[s]=(magTown[m][s]||0)+f;}));
+  const magDom=Object.entries(magTown).map(([m,cs])=>{const vals=Object.values(cs),tot=vals.reduce((a,b)=>a+b,0),
+    top=Object.entries(cs).sort((a,b)=>b[1]-a[1])[0];return {m,tot,topShare:top[1]/tot,top:top[0]};})
+    .filter(d=>d.tot>=40&&Object.keys(magTown[d.m]).length>=2).sort((a,b)=>b.topShare-a.topShare);
 
   document.getElementById("concl-body").innerHTML = `
   <h2>Conclusions</h2>
@@ -397,7 +414,36 @@ function buildConclusions(){
   Espanya de l'INE; és un llinatge gairebé extint. Tot això descriu la distribució dels <b>cognoms</b>, no fa
   cap afirmació sobre les persones que els porten avui.</p>
 
-  <h3>7. Límits honestos</h3>
+  <h3>7. L'altre extrem: la signatura de la immigració recent</h3>
+  <p>Si el col·lectiu xueta mostra com es veu una <b>soca establerta de fa segles</b>, la immigració <b>recent</b>
+  dibuixa la signatura contrària —i és, alhora, <b>on el cens veu menys</b>. Ho mirem amb els cognoms
+  <b>magrebins</b>, el cas de migració laboral recent més clar i mesurable (la immigració europea és més
+  nombrosa, però és sobretot residencial —un fenomen distint, sense l'efecte de cadena). Com abans: descrivim
+  <b>cognoms</b>, no persones, i <b>no toca cap estadística</b>.</p>
+  <p class="result-box" style="border-color:var(--warn)">⚠ <b>La punta de l'iceberg.</b> Només en veiem
+  <b>${magMass.toLocaleString('ca')}</b> portadors (${pc1(magMass/totMass)} de la massa), i <b>${magCur} dels
+  ${magSurns.length}</b> cognoms només sobreviuen per la llista curada, per sota del top-20/país de l'INE. El
+  llindar ≥20 a Espanya i el secret &lt;5 per poble <b>amaguen justament</b> les comunitats noves i concentrades.
+  La població real és força més gran: això descriu una <b>signatura</b>, no un recompte.</p>
+  <p><b>a) Efecte fundador: pocs cognoms, i dominants.</b> On la soca xueta repartia els portadors entre moltes
+  cases, aquí uns pocs cognoms de <b>cadena migratòria</b> dominen: nº <i>efectiu</i> <b>${Math.round(magEff)}</b>
+  de ${magSurns.length} presents, i els 10 primers ja fan el <b>${pc(magTop10)}</b>. La uniformitat entre cognoms
+  cau a <b>${n2(evMag)}</b> (la xueta era ${n2(evXu)}), i hi ha pobles on gairebé tot és una família fundadora:
+  <b>${magDom[0].m}</b> ${Math.round(magDom[0].topShare*100)}% ${cap(magDom[0].top)} · <b>${magDom[1].m}</b>
+  ${Math.round(magDom[1].topShare*100)}% ${cap(magDom[1].top)}. Fins i tot es veu la fragmentació per
+  <b>transliteració</b>: <i>Zouggaghi</i> i <i>Zougaghi</i> són el mateix cognom escrit de dues maneres —cosa que
+  encara infracompta més.</p>
+  <p><b>b) Geografia: al camp, i fuig de Palma.</b> El mirall exacte de la §6: els cognoms xuetes eren Palma i
+  interior urbà; aquests es concentren als <b>pobles agrícoles del Pla</b>. Per càpita, el senyal és fortíssim a
+  pobles concrets: ${magPermil.map(x=>`<b>${x.m}</b> ${d1(x.pm)}‰`).join(" · ")}. I <b>Palma només ${pc(magPalma)}</b>
+  del grup, quan és el ${pc(POP['Palma']/islPop)} de l'illa: <b>infrarepresentat a la capital</b>, al revés de
+  gairebé tothom —migració de treball al camp, no urbana. Present a ${magMunis}/${D.n_municipalities} municipis.</p>
+  <p class="hint" style="color:var(--muted)">Dues immigracions separades per segles, signatures oposades: la
+  vella, barrejada i escampada; la recent, concentrada en poques famílies i pobles —i mig invisible per a un cens
+  pensat per a cognoms ja assentats. La marca d'origen no diu res de ningú: només descriu <b>on viu, avui</b>, la
+  gent que porta cada cognom.</p>
+
+  <h3>8. Límits honestos</h3>
   <ul>
     <li><b>Tot sobre el recompte municipal de l'INE</b> (taxa‰ × padró, ≥5 per poble; reconstrucció exacta). La
     llista de partida és el <b>cens nacional de l'INE</b> (${D.all.n_surnames.toLocaleString('ca')} cognoms ≥20 a
