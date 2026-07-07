@@ -417,9 +417,9 @@ function buildConclusions(){
   <h3>7. L'altre extrem: la signatura de la immigració recent</h3>
   <p>Si el col·lectiu xueta mostra com es veu una <b>soca establerta de fa segles</b>, la immigració <b>recent</b>
   dibuixa la signatura contrària —i és, alhora, <b>on el cens veu menys</b>. Ho mirem amb els cognoms
-  <b>magrebins</b>, el cas de migració laboral recent més clar i mesurable (la immigració europea és més
-  nombrosa, però és sobretot residencial —un fenomen distint, sense l'efecte de cadena). Com abans: descrivim
-  <b>cognoms</b>, no persones, i <b>no toca cap estadística</b>.</p>
+  <b>magrebins</b>, el cas de migració laboral recent més net i mesurable (l'etiqueta «europeu» del cens barreja
+  perfils molt diversos —del portuguès i l'est-europeu de treball al resident britànic o alemany— i no en fa un
+  senyal únic). Com abans: descrivim <b>cognoms</b>, no persones, i <b>no toca cap estadística</b>.</p>
   <p class="result-box" style="border-color:var(--warn)">⚠ <b>La punta de l'iceberg.</b> Només en veiem
   <b>${magMass.toLocaleString('ca')}</b> portadors (${pc1(magMass/totMass)} de la massa), i <b>${magCur} dels
   ${magSurns.length}</b> cognoms només sobreviuen per la llista curada, per sota del top-20/país de l'INE. El

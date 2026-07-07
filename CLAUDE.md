@@ -54,6 +54,11 @@ Read `README.md` first (sources + pipeline + results).
       `FOREIGN_MANUAL` gazetteer (external onomastic knowledge, NOT INE, auditable). EXCLUDES
       centuries-old Andalusi-Mallorcan stock (Bennàssar, Binimelis, Bibiloni). Needed because INE
       distribution alone cannot tell a recent Moroccan surname from an old Mallorcan one.
+      **Native-homograph guard (`native_homograph`):** the `ine_nationality` flag defers to Layer 3
+      when a surname is clearly native — top-tier national frequency (`NAT_FREQ_NATIVE=60000`, e.g.
+      Martín/Marín, in a French list yet mainstream Spanish) or an explicit low-frequency exception
+      (`NATIONALITY_FALSE_POSITIVES`, e.g. Thomas = Catalan Tomàs in an English list). Label-only:
+      `oref` (is_auto hygiene) is untouched, so the isonymy/Mantel statistics stay byte-identical.
     - **Layer 3 — CONCENTRATION PROXY (descriptive).** català vs castellà from over-representation
       in the Catalan-speaking provinces (LQ_Cat/Bal ≥ `T_ORIGIN=1.5`, or LQ_Val ≥ `T_VAL=5`). A proxy
       for linguistic DOMAIN, NOT etymology ("català" = "concentrated in the Catalan lands per INE").
@@ -61,7 +66,7 @@ Read `README.md` first (sources + pipeline + results).
       national bearers LQ_Bal is collinear with Mallorca endemism (a rare surname almost all on the
       island is Balears-concentrated by construction), so there an INDEPENDENT Catalonia/Valencia
       signal is required, else **"sense classificar"** rather than a guess.
-    - `basis` counts (JSON `origin_basis_counts`): ~7015 concentration · ~256 ine_nationality ·
+    - `basis` counts (JSON `origin_basis_counts`): ~7018 concentration · ~253 ine_nationality ·
       ~55 curated_foreign · ~649 undetermined. The web surfaces each surname's layer as a badge in
       the sidebar search, and the Methodology tab documents the stack + an "if your surname looks
       wrong" note.
@@ -86,7 +91,7 @@ Helpers: `src/muni_ids.py` (INE contour region-id → town), `src/screen_foreign
 
 - Isolation by distance holds for the autochthonous (Mallorca-endemic) surnames:
   Mantel **r ≈ 0.30, p = 0.0001**, stable across LQ thresholds; full/non-endemic sets ns.
-- Origin by population: **≈ 46 % català · 48 % castellà · 4.6 % foreign · 1.1 % sense classificar**
+- Origin by population: **≈ 46 % català · 49 % castellà · 3.6 % foreign · 1.1 % sense classificar**
   (the low-frequency floor left the rare undetermined tail out of "català").
 - Endemic set = 997 surnames (LQ ≥ 1.3, ≥ 20 bearers, non-foreign).
 

@@ -264,11 +264,28 @@ def main():
     def indep_catalan(e):     # Catalan signal INDEPENDENT of Mallorca/Balears endemism
         return (e["lq_cat"] is not None and e["lq_cat"]>=T_ORIGIN) or \
                (e["lq_val"] is not None and e["lq_val"]>=T_VAL)
+    # INE "Apellidos por nacionalidad" shares homograph surnames with mainstream
+    # native ones: Martín/Marín surface in a French list, Thomas is the Catalan
+    # Tomàs in an English one. Such a surname is NATIVE, not a foreign resident,
+    # so the nationality flag must defer to Layer 3. Two conservative native
+    # signals: a top-tier national frequency (a surname with tens of thousands of
+    # Spanish bearers is no European resident — the genuine immigrant surnames
+    # here top out around 49k, Silva), or an explicit, auditable list of
+    # low-frequency native homographs. NOTE: this only rewrites the descriptive
+    # ORIGIN label; `oref` (endemic-set hygiene for is_auto) is left untouched, so
+    # the isonymy/Mantel statistics stay byte-identical.
+    NAT_FREQ_NATIVE=60000
+    NATIONALITY_FALSE_POSITIVES={norm("Thomas")}
+    def native_homograph(s):
+        e=endem[s]
+        return (e["spain"] is not None and e["spain"]>=NAT_FREQ_NATIVE) \
+               or s in NATIONALITY_FALSE_POSITIVES
     def origin_of(s):
         """Return (label, basis). basis names the LAYER that decided it."""
         e=endem[s]; cs=e["cat_score"]; lv=e["lq_val"]
         # --- Layer 2: recent-foreign flag ---------------------------------
-        if s in oref_nac:    return oref_nac[s],    "ine_nationality"   # INE-direct
+        if s in oref_nac and not native_homograph(s):
+            return oref_nac[s], "ine_nationality"   # INE-direct (unless a native homograph)
         if s in oref_manual: return oref_manual[s], "curated_foreign"   # external, curated
         # --- Layer 3: català/castellà by concentration (descriptive proxy) -
         low = e["spain"] is not None and e["spain"]<ORIGIN_FLOOR
