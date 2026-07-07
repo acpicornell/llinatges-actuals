@@ -695,7 +695,7 @@ function drawTree(dendro, autochOf){
 // the geometry: only the distinctive towns (farthest from the centroid) + the big ones are
 // labelled by default; every dot has a native <title> tooltip; and the plot is zoom/pan-able
 // (initMDS) — zooming in spreads the centre and reveals the hidden labels.
-function drawMDS(mds, locs, autochOf){
+function drawMDS(mds, locs, autochOf, regColOf){
   const W=760,H=470,pad=46;
   const xs=mds.map(p=>p[0]), ys=mds.map(p=>p[1]);
   const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
@@ -709,7 +709,8 @@ function drawMDS(mds, locs, autochOf){
   mds.forEach((p,i)=>{const cx=P[i][0],cy=P[i][1],nm=locs[i];
     const r=Math.min(3+Math.sqrt(D.municipality_pop[nm]||0)/70,11);
     const rii=(D.auto.Rii&&D.auto.Rii[nm]!=null)?` · Rii ${D.auto.Rii[nm].toFixed(5)}`:"";
-    dots+=`<circle data-i="${i}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="${ramp(autochOf(nm))}" `+
+    const cAuto=ramp(autochOf(nm)), cReg=regColOf?regColOf(nm):cAuto;
+    dots+=`<circle data-i="${i}" data-cauto="${cAuto}" data-creg="${cReg}" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="${cReg}" `+
           `fill-opacity=".85" stroke="#000" stroke-width=".6"><title>${nm}${rii}</title></circle>`;
     const far=dist[i]>=cut||r>7;
     labs+=`<text data-i="${i}" x="${cx.toFixed(1)}" y="${(cy-r-2).toFixed(1)}" text-anchor="middle" class="mds-lab ${far?'far':'near'}">${nm}</text>`;});
@@ -810,27 +811,99 @@ function buildIso(){
 function buildMDS(){
   const u=D.auto.mantel;
   const autochOf=l=>(D.muni_stats[l]||{autoch:0}).autoch;
+  // --- region colouring (fcluster of the endemic isonymy tree, from the JSON) ---
+  const REG=D.auto.region, groups={};
+  Object.entries(REG).forEach(([t,c])=>{(groups[c]=groups[c]||[]).push(t);});
+  const bySize=Object.entries(groups).sort((a,b)=>b[1].length-a[1].length);
+  const PAL=["#6b8cae","#e0913c","#5aa46a","#a877cf","#d05a52","#3fa8a0","#c9a13b"];
+  const regCol={}; bySize.forEach(([id],k)=>regCol[id]=PAL[k%PAL.length]);
+  const regColOf=t=>regCol[REG[t]]||"#888";
+  const nameFor=(towns)=> towns.length===1?towns[0]
+      : towns.includes('Sóller')?'Vall de Sóller'
+      : towns.includes('Manacor')?'Llevant–Migjorn'
+      : towns.includes('Palma')?'Nucli connectat'
+      : towns.includes('Andratx')?'Andratx–Puigpunyent'
+      : towns.slice(0,2).join(', ');
+  const regLegend=bySize.map(([id,towns])=>
+    `<span class="oleg"><span class="sw" style="background:${regCol[id]}"></span>${nameFor(towns)} <b>${towns.length}</b></span>`).join(" ");
   document.getElementById("mds-body").innerHTML = `
     <h2>MDS — mapa de semblança entre pobles</h2>
     <p class="lead">La taula de distàncies de Lasker (estrat <b>autòcton</b>, ${D.auto.n_surnames} cognoms
     endèmics) projectada a un pla 2D: <b>com més a prop dos pobles, més s'assemblen pels cognoms</b>. No és un
-    mapa geogràfic —l'orientació és arbitrària—; el color és l'autoctonia del municipi i la mida ~ població.
-    Que els pobles interiors i de muntanya s'agrupin lluny de Palma és la mateixa estructura que capta el
-    <b>Mantel (r=${u.r}, p=${u.p})</b>.</p>
+    mapa geogràfic —l'orientació és arbitrària—; el color agrupa els pobles per <b>regió</b> (el tall de l'arbre
+    d'isonímia en 6 grups) i la mida ~ població. Que els pobles s'agrupin per color <b>i</b> per posició és la
+    mateixa estructura que capta el <b>Mantel (r=${u.r}, p=${u.p})</b>.</p>
+    <div class="mn-bar" style="align-items:center">
+      <span class="hint" style="margin:0">Color:</span>
+      <span id="mds-toggle">
+        <button class="tog active" data-k="creg">per regió</button>
+        <button class="tog" data-k="cauto">per autoctonia</button>
+      </span>
+    </div>
+    <div id="mds-legend-reg" class="oleglist" style="margin:6px 0">${regLegend}</div>
+    <div id="mds-legend-auto" class="oleglist" style="margin:6px 0;display:none">
+      <span class="oleg"><span class="sw" style="background:${ramp(1)}"></span>autòcton</span>
+      <span class="oleg"><span class="sw" style="background:${ramp(0)}"></span>no endèmic</span></div>
     <p class="hint" style="color:var(--muted)"><span style="color:var(--accent)">↔ Clica una bombolla per
     fixar-ne el nom · roda del ratolí per apropar · arrossega per moure · doble clic per reiniciar.</span>
     De base només s'etiqueten els pobles distintius; clica (o passa-hi el ratolí) per identificar qualsevol
     punt, i en apropar-te apareixen les etiquetes del nucli central.</p>
-    ${drawMDS(D.auto.mds, D.auto.locs, autochOf)}
-    <div class="caveat">Els pobles <b>aïllats</b> (Banyalbufar, Búger, Costitx, Deià, Sóller…) salten a les
-    vores: comparteixen pocs cognoms amb la resta → Rii alt. El <b>nucli dens</b> són els pobles que s'assemblen
-    molt entre ells. Calculat sobre els recomptes municipals de l'INE (≥5 per poble), estrat autòcton (LQ≥${D.lq_bands.auto}).</div>`;
-  initMDS(document.querySelector("#mds-body svg.mds"));
+    ${drawMDS(D.auto.mds, D.auto.locs, autochOf, regColOf)}
+    <div class="caveat">La <b>vall de Sóller</b> i la banda de <b>Llevant-Migjorn</b> salten com a grups nets;
+    la resta és un <b>nucli connectat</b>, amb un parell de solitaris a les vores (Banyalbufar, Maria de la
+    Salut) que comparteixen pocs cognoms amb ningú → Rii alt. Canvia a <b>autoctonia</b> per veure el gradient
+    verd→vermell. Calculat sobre els recomptes municipals de l'INE (≥5 per poble), estrat autòcton (LQ≥${D.lq_bands.auto}).</div>`;
+  const svg=document.querySelector("#mds-body svg.mds");
+  initMDS(svg);
+  document.querySelectorAll("#mds-toggle button").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll("#mds-toggle button").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    const reg=b.dataset.k==="creg";
+    svg.querySelectorAll("circle[data-i]").forEach(c=>c.setAttribute("fill",reg?c.dataset.creg:c.dataset.cauto));
+    document.getElementById("mds-legend-reg").style.display=reg?"":"none";
+    document.getElementById("mds-legend-auto").style.display=reg?"none":"";
+  }));
 }
 
 // --- methodology ----------------------------------------------------------
+// robustness curve: Mantel r (left axis) and full-matrix correlation (right axis) vs top-N per town
+function drawConvergence(tc){
+  const rows=tc.rows, n=rows.length, rf=tc.r_full;
+  const W=720,H=320,pl=52,pr=54,pt=20,pb=48, iw=W-pl-pr, ih=H-pt-pb;
+  const X=i=>pl+(n>1?i/(n-1):0)*iw, yR=v=>pt+ih-(v/0.5)*ih, yC=v=>pt+ih-v*ih;
+  const CR="#e0913c", CC="#6b8cae", MUT="#95a89d";
+  let g="";
+  [0,0.1,0.2,0.3,0.4,0.5].forEach(v=>{const y=yR(v);
+    g+=`<line x1="${pl}" y1="${y.toFixed(1)}" x2="${pl+iw}" y2="${y.toFixed(1)}" stroke="#ffffff" stroke-opacity=".07"/>`+
+       `<text x="${pl-8}" y="${(y+3).toFixed(1)}" text-anchor="end" fill="${CR}" font-size="10">${v.toFixed(1)}</text>`;});
+  [0,0.25,0.5,0.75,1].forEach(v=>g+=`<text x="${pl+iw+8}" y="${(yC(v)+3).toFixed(1)}" text-anchor="start" fill="${CC}" font-size="10">${v.toFixed(2)}</text>`);
+  let xl="";
+  rows.forEach((r,i)=>xl+=`<text x="${X(i).toFixed(1)}" y="${(pt+ih+16).toFixed(1)}" text-anchor="middle" fill="${MUT}" font-size="10">${r.n||'complet'}</text>`);
+  xl+=`<text x="${(pl+iw/2).toFixed(1)}" y="${(pt+ih+38).toFixed(1)}" text-anchor="middle" fill="${MUT}" font-size="11">top-N cognoms més freqüents per municipi</text>`;
+  const yrf=yR(rf);
+  const ref=`<line x1="${pl}" y1="${yrf.toFixed(1)}" x2="${pl+iw}" y2="${yrf.toFixed(1)}" stroke="${CR}" stroke-dasharray="4 4" stroke-opacity=".6"/>`+
+    `<text x="${pl+iw}" y="${(yrf-5).toFixed(1)}" text-anchor="end" fill="${CR}" font-size="10">cens complet · r=${rf.toFixed(2).replace('.',',')}</text>`;
+  const poly=(key,y,c)=>`<polyline points="${rows.map((r,i)=>`${X(i).toFixed(1)},${y(r[key]).toFixed(1)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="2"/>`;
+  const dots=(key,y,c,lab)=>rows.map((r,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${y(r[key]).toFixed(1)}" r="3" fill="${c}"><title>top-${r.n||'complet'} · ${lab}=${r[key]}</title></circle>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto;margin:6px 0">
+    ${g}${ref}
+    ${poly('mcorr',yC,CC)}${poly('r',yR,CR)}
+    ${dots('mcorr',yC,CC,'corr. matriu')}${dots('r',yR,CR,'Mantel r')}
+    <line x1="${pl}" y1="${pt}" x2="${pl}" y2="${pt+ih}" stroke="#ffffff" stroke-opacity=".25"/>
+    <line x1="${pl}" y1="${pt+ih}" x2="${pl+iw}" y2="${pt+ih}" stroke="#ffffff" stroke-opacity=".25"/>
+    ${xl}
+    <g font-size="11"><rect x="${pl+10}" y="${pt+4}" width="10" height="10" fill="${CR}"/>
+      <text x="${pl+24}" y="${pt+13}" fill="${CR}">Mantel r (aïllament per distància, eix esq.)</text>
+      <rect x="${pl+10}" y="${pt+20}" width="10" height="10" fill="${CC}"/>
+      <text x="${pl+24}" y="${pt+29}" fill="${CC}">correlació amb la matriu completa (eix dret)</text></g>
+  </svg>`;
+}
 function buildMethod(){
   const cov=Object.values(D.coverage);
+  const TC=D.topn_convergence, tcr=n=>(TC.rows.find(r=>r.n===n)||{}).r;
+  const d2=x=>x.toFixed(2).replace('.',','), cc=x=>String(x).replace('.',',');
+  const tcTable=TC.rows.map(r=>`<tr${r.n===50?' style="color:#e0b070"':''}><td class="num">${r.n||'complet'}</td>`+
+    `<td class="num">${cc(r.r)}</td><td class="num">${cc(r.mcorr)}</td><td class="num">${r.k}</td></tr>`).join("");
   document.getElementById("metod-body").innerHTML = `
     <h2>Metodologia i límits</h2>
     <p class="lead">Prova seriosa de si es pot fer isonímia moderna de Mallorca separant el fons
@@ -955,7 +1028,41 @@ function buildMethod(){
     <p>Calculat sobre els <b>recomptes municipals de l'INE</b> (≥5 per poble) i el <b>cens complet</b>
     (${D.all.n_surnames.toLocaleString('ca')} cognoms): el senyal és robust.</p>
 
-    <h3>4. Límits honestos (importants)</h3>
+    <h3>4. Robustesa: quantes dades calien de veritat?</h3>
+    <p>Vam baixar el <b>cens nacional sencer</b> (${D.all.n_surnames.toLocaleString('ca')} cognoms presents a
+    Mallorca). Per a la isonímia, era <b>overkill</b>? Es pot provar directament: truncar cada municipi als seus
+    <b>N cognoms més freqüents</b> (de tots), quedar-nos els endèmics que hi caiguin, recalcular la isonímia de
+    l'estrat autòcton i veure com convergeix cap al cens complet —mesurant dues coses: el <b>Mantel r</b> (vs
+    geografia) i la <b>correlació de tota la matriu de distàncies</b> de Lasker amb la del cens complet.</p>
+    ${drawConvergence(TC)}
+    <table><thead><tr><th class="num">top-N/poble</th><th class="num">Mantel r</th>
+      <th class="num" title="correlació de la matriu de distàncies amb la del cens complet">corr. matriu</th>
+      <th class="num" title="cognoms endèmics que sobreviuen a la truncació, sumat sobre pobles">endèmics usats</th></tr></thead>
+      <tbody>${tcTable}</tbody></table>
+    <p><b>1. El senyal viu al <i>cap</i> de la distribució.</b> El Mantel r <b>no és monòton</b>: amb top-50 per
+    poble val <b>${d2(tcr(50))}</b> —<b>més fort</b> que amb el cens complet (${d2(TC.r_full)})—, i després baixa.
+    Els cognoms més <b>comuns</b> de cada poble són els <b>marcadors geogràfics més nítids</b> (Cañellas a Santa
+    Eugènia, Bibiloni a Santa Margalida…); la cua llarga de cognoms endèmics <b>difusos</b> afegeix fidelitat al
+    mapa però <b>dilueix</b> la correlació bruta. Per només <b>detectar</b> l'aïllament per distància, doncs, en
+    tindries prou amb <b>top ~30–50</b> (i encara el sobreestimaries).</p>
+    <p><b>2. El <i>mapa</i> de debò necessita més.</b> La <b>matriu sencera</b> de distàncies —la que mou el MDS,
+    les regions, els parells bessó/solitari i la F— només convergeix cap a <b>top ~200</b>: la seva correlació amb
+    la del cens complet puja <b>0,25</b> (N=10) → <b>0,72</b> (N=50) → <b>0,94</b> (N=100) → <b>0,99</b> (N=200) →
+    <b>0,9998</b> (N=500). A partir de <b>top ~300</b> ja no canvia pràcticament res.</p>
+    <div class="caveat"><b>Veredicte.</b> Per a la <b>geometria d'isonímia</b>, els
+    ${D.all.n_surnames.toLocaleString('ca')} cognoms <b>eren overkill</b>: amb <b>top ~300</b> per poble el mapa
+    és indistingible del complet (corr 0,998). <b>Però</b> el cens sencer <b>no era només per a la isonímia</b>:
+    fa falta per <b>calcular el filtre d'endemisme mateix</b> (necessites la freqüència <b>nacional</b>/LQ),
+    l'<b>origen</b>, la <b>cobertura</b> i els «cognoms més mallorquins» —amb un top-N per poble ni tan sols
+    podries classificar l'endemisme. Per al <b>projecte</b>, doncs, no era overkill; per a la <b>isonímia
+    sola</b>, sí. I rehabilita honestament el vell veredicte d'IBESTAT: el top-50 <b>no</b> era «inútil per a
+    l'estructura» —detecta el senyal (fins i tot inflat) i recupera el mapa gruixut (corr 0,72)—; era <b>cru</b>
+    per al mapa fi, i sobretot inservible per una altra raó: d'una taula top-50 per poble <b>no</b> pots treure
+    freqüències nacionals ni, per tant, el filtre endèmic. <b>Matís:</b> aquest experiment <b>assumeix</b>
+    l'endemisme ja classificat (des de les dades nacionals); mesura quants cognoms per poble necessita la
+    <b>geometria</b>, no si es podria arrencar tot des de dades truncades —que no es pot.</div>
+
+    <h3>5. Límits honestos (importants)</h3>
     <ul>
       <li><b>Tot sobre el recompte municipal de l'INE.</b> La isonímia, l'endemisme, la composició
       per municipi i el navegador es calculen sobre els recomptes reconstruïts de l'INE (taxa‰ × padró del
@@ -973,12 +1080,12 @@ function buildMethod(){
       <li><b>Secret estadístic:</b> municipis &lt;400 hab. exclosos; cua &lt;5 suprimida. <b>Instantània 2025.</b></li>
     </ul>
 
-    <h3>5. Veredicte preliminar</h3>
+    <h3>6. Veredicte preliminar</h3>
     <p>El mètode <b>funciona</b> per a una avaluació exploratòria: amb dades obertes i sense inventar res,
     aïlla el fons autòcton i en revela l'estructura geogràfica (r≈${D.auto.mantel.r}). Els límits (cens de partida
     = cognoms ≥20 a Espanya, secret &lt;5, contaminació d'immigració recent) són reals i s'han de mantenir a la vista.</p>
 
-    <h3>6. La marca xueta</h3>
+    <h3>7. La marca xueta</h3>
     <p>El navegador marca amb <span class="xu">xueta</span> els cognoms de la <b>llista canònica de 15
     llinatges</b> descendents dels conversos jueus mallorquins, fixada per Miquel <b>Forteza</b> (<i>Els
     descendents dels jueus conversos de Mallorca</i>): <b>Aguiló, Bonnín, Cortès, Fortesa, Fuster, Martí, Miró,

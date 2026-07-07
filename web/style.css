@@ -53,7 +53,11 @@ main{flex:1;display:flex;min-height:0}
 .dl{background:#1a241d;border:1px solid var(--line);color:var(--ink);border-radius:8px;
   padding:7px 12px;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .dl:hover{border-color:var(--accent);color:var(--accent)}
-.dl::before{content:"⭳";font-size:14px}
+.dl::before{content:"↓";font-size:14px;font-weight:700}
+.tog{background:#1a241d;border:1px solid var(--line);color:var(--muted);border-radius:8px;
+  padding:5px 11px;font-size:12.5px;cursor:pointer;font-family:inherit}
+.tog:hover{border-color:var(--accent);color:var(--accent)}
+.tog.active{color:var(--ink);border-color:var(--accent);background:#1c281f}
 .mn-head{display:flex;flex-wrap:wrap;gap:10px 20px;font-size:13px;color:var(--muted);
   border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:6px;background:var(--panel)}
 .mn-head b{color:var(--ink)} .mn-head .k{display:inline-flex;gap:6px;align-items:baseline}

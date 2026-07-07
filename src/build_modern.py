@@ -361,6 +361,40 @@ def main():
     allset=set(endem)
     autoset={s for s in endem if is_auto(s)}
     nonendset={s for s in endem if is_nonend(s)}
+    # --- robustness curve: how many top-N surnames per municipality recover the isonymy? ---
+    # Truncate each town to its N most-frequent surnames (all types), keep the endemic ones
+    # among them, recompute the endemic Lasker matrix, and measure convergence to the full
+    # census — both the raw Mantel r (vs geography) and the correlation of the whole distance
+    # matrix with the full one. Descriptive robustness check; feeds no result.
+    def topn_convergence():
+        Mall=counts_for(allset)
+        locs=[l for l in Mall.index if l in coords]
+        if len(locs)<3: return None
+        V=Mall.loc[locs].values.astype(float)                       # towns × all surnames
+        amask=np.array([c in autoset for c in Mall.columns])
+        popv=np.array([pop[code_by_name[l]] for l in locs],float).reshape(-1,1)
+        Dg,_=iso.haversine_matrix({l:coords[l] for l in locs})
+        iu=np.triu_indices(len(locs),k=1)
+        def lasker_topn(N):
+            keep=np.zeros_like(V,bool)
+            if N is None: keep[:]=True
+            else:
+                for i in range(V.shape[0]):
+                    if V[i].any(): keep[i,np.argsort(-V[i])[:N]]=True
+            Mk=np.where(keep & amask[None,:],V,0.0)
+            P=Mk/popv; R=P@P.T
+            return iso.lasker_distance(R), int((Mk.sum(axis=0)>0).sum())
+        Dfull,_=lasker_topn(None)
+        iuq=lambda D: D[iu]
+        rfull=float(np.corrcoef(iuq(Dfull),iuq(Dg))[0,1])
+        rows=[]
+        for N in (10,20,30,50,75,100,150,200,300,500,None):
+            Dn,k=lasker_topn(N)
+            rows.append({"n":(N or 0),
+                         "r":round(float(np.corrcoef(iuq(Dn),iuq(Dg))[0,1]),4),
+                         "mcorr":round(float(np.corrcoef(iuq(Dn),iuq(Dfull))[0,1]),4),
+                         "k":k})
+        return {"rows":rows,"r_full":round(rfull,4),"n_towns":len(locs)}
     ORIGINS=["català","castellà","magrebí","subsaharià","asiàtic","europeu","sense classificar"]
     result={}
     for tag,surset in [("all",allset),("auto",autoset),("nonend",nonendset)]:
@@ -445,6 +479,7 @@ def main():
          "n_municipalities":len(munis),"pop_mallorca_covered":pop_mall,
          "lq_bands":{"auto":LQ_AUTO,"origin":T_ORIGIN,"val":T_VAL,"mass":MASS_FLOOR,"origin_floor":ORIGIN_FLOOR},
          "lq_sensitivity":lq_sensitivity,
+         "topn_convergence":topn_convergence(),
          "municipality_pop":{name[c]:pop[c] for c in munis},
          "coords":{name[c]:coords.get(name[c]) for c in munis},
          "coverage":coverage,
