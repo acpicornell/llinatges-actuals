@@ -934,7 +934,7 @@ function buildMethod(){
     `<td class="num">${cc(r.r)}</td><td class="num">${cc(r.mcorr)}</td><td class="num">${r.k}</td></tr>`).join("");
   document.getElementById("metod-body").innerHTML = `
     <h2>Metodologia i límits</h2>
-    <p class="lead">Prova seriosa de si es pot fer isonímia moderna de Mallorca separant el fons
+    <p class="lead">Prova seriosa de si es pot fer isonímia actual de Mallorca separant el fons
     autòcton (endèmic) de l'estrat ubic/no endèmic, <b>sense lexicon onomàstic</b> i només amb dades obertes.</p>
 
     <h3>Conceptes estadístics</h3>
