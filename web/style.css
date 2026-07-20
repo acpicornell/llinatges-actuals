@@ -165,3 +165,10 @@ svg.mds circle.sel{stroke:var(--accent);stroke-width:1.8}
 #metod-body code{background:#12190f;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:12px}
 #metod-body b{color:var(--ink)}
 .src{color:var(--muted);font-size:11.5px;margin-top:10px}
+
+/* footer: same scale/style as the rest of the page (muted 12px, accent links) */
+footer{padding:16px 20px 24px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.5}
+footer p{margin:3px 0}
+footer em{color:var(--ink);font-style:italic}
+footer a{color:var(--accent);text-decoration:none}
+footer a:hover{text-decoration:underline}
