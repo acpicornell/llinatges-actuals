@@ -1,5 +1,7 @@
 # llinatges-actuals — modern Mallorcan surname isonymy (INE census, 2025)
 
+[![Deploy](https://github.com/acpicornell/llinatges-actuals/actions/workflows/deploy.yml/badge.svg)](https://github.com/acpicornell/llinatges-actuals/actions/workflows/deploy.yml)
+
 Population-genetics view of **present-day** Mallorcan surnames: spatial isonymy across the
 51 municipalities, an **endemism** axis (which surnames are concentrated on the island) and,
 kept strictly apart, a descriptive **origin** axis (Catalan vs Castilian vs foreign). Sister
