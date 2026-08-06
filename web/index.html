@@ -3,10 +3,6 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Never serve a stale build while reviewing locally (this project is not deployed). -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>Isonímia actual — Mallorca 2025</title>
   <meta name="description" content="Isonímia actual de Mallorca a partir del cens de cognoms de l'INE (2025): distribució municipal dels cognoms, eix d'endemisme i aproximació descriptiva a l'origen. Elaboració pròpia amb dades de l'INE.">
   <meta property="og:type" content="website">
@@ -15,8 +11,7 @@
   <meta property="og:locale" content="ca_ES">
   <link rel="canonical" href="https://llinatges.corpusbalear.org/">
   <link rel="stylesheet" href="vendor/leaflet.css">
-  <!-- Cache-bust our own assets on every load; vendored Leaflet is stable, let it cache. -->
-  <script>document.write('<link rel="stylesheet" href="style.css?_='+Date.now()+'">')</script>
+  <link rel="stylesheet" href="style.css">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -114,6 +109,6 @@
   </footer>
 
   <script src="vendor/leaflet.js"></script>
-  <script>document.write('<scr'+'ipt src="app.js?_='+Date.now()+'"></scr'+'ipt>')</script>
+  <script src="app.js"></script>
 </body>
 </html>

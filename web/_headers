@@ -1,0 +1,15 @@
+# Cloudflare Workers Static Assets reads the same _headers format as Pages.
+#
+# Our own assets carry no content hash in their filenames, so they must
+# revalidate on every load: a deploy changes the ETag and the browser refetches,
+# otherwise it gets a 304 and reuses the cached body. That keeps HTML, JS, CSS
+# and the 2.5 MB site_data JSON always in step with the live deploy while
+# costing a few hundred bytes per visit instead of ~2.7 MB.
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Vendored Leaflet is pinned and only changes when we deliberately re-vendor it,
+# so it can be cached outright. Bounded to 30 days rather than 'immutable':
+# without a hashed filename an upgrade would otherwise stay invisible for a year.
+/vendor/*
+  Cache-Control: public, max-age=2592000
