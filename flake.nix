@@ -11,7 +11,7 @@
     {
       # `nix develop` -> Python (pandas/numpy/scipy) for the INE pipeline (src/).
       # The fetchers use only the standard library; build_modern.py / isonymy.py need
-      # numpy + pandas + scipy. Pinned via flake.lock (shared rev with llinatges-balears).
+      # numpy + pandas + scipy. Pinned via flake.lock (shared rev with llinatges-medievals).
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           packages = [

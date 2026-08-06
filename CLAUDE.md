@@ -2,7 +2,7 @@
 
 **Modern Mallorcan surname isonymy** from the **full INE surname census (2025)**. Population
 genetics on present-day surname distribution across the 51 Mallorca municipalities. Sister
-project to the 14th-century corpus (`llinatges-balears`); kept **separate** on purpose.
+project to the 14th-century corpus (`llinatges-medievals`); kept **separate** on purpose.
 Read `README.md` first (sources + pipeline + results).
 
 ## Conventions (respect them)
@@ -81,7 +81,7 @@ Read `README.md` first (sources + pipeline + results).
 ## Pipeline (INE → JSON → web)
 
 Dev env is pinned with Nix: `nix develop` (from `flake.nix`, locked in `flake.lock` — same nixpkgs
-rev as `llinatges-balears`) gives Python + `numpy`/`pandas`/`scipy`; `requirements.txt` is the pip
+rev as `llinatges-medievals`) gives Python + `numpy`/`pandas`/`scipy`; `requirements.txt` is the pip
 fallback. The fetchers are stdlib-only; only `build_modern.py`/`isonymy.py` need the scientific stack.
 
 All Python lives in `src/`; run each from the repo root (`nix develop -c python src/<script>.py`). Scripts
@@ -122,7 +122,7 @@ Helpers: `src/muni_ids.py` (INE contour region-id → town), `src/screen_foreign
   with `modern_2025.json` when the pipeline is rerun.
 - Optional: surname spelling-variant merging (e.g. `Matemalas`≈`Matamalas`) — a normalization
   issue, not origin. The medieval repo has a `normalize.py` for the analogous problem.
-- The project was split out of `llinatges-balears/explore/ibestat_modern/` on 2026-07-06;
+- The project was split out of `llinatges-medievals/explore/ibestat_modern/` on 2026-07-06;
   that old copy may still exist as a backup until confirmed removable.
 - **Possible extension — the rest of the Balearics (Menorca / Eivissa / Formentera).** Deferred
   (owner said "just curiosity" for now). Feasibility already scoped: our data is Mallorca-only

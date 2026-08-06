@@ -5,7 +5,7 @@
 Population-genetics view of **present-day** Mallorcan surnames: spatial isonymy across the
 51 municipalities, an **endemism** axis (which surnames are concentrated on the island) and,
 kept strictly apart, a descriptive **origin** axis (Catalan vs Castilian vs foreign). Sister
-project to the 14th-century corpus work (`llinatges-balears`), kept **separate** because it
+project to the 14th-century corpus work (`llinatges-medievals`), kept **separate** because it
 outgrew being an exploration.
 
 Everything comes from the **INE** (Instituto Nacional de Estadística). There is **no IBESTAT
@@ -16,7 +16,9 @@ so it was dropped in favour of the full INE census. (How little per-town data th
 
 > Elaboración propia con datos extraídos del sitio web del INE: www.ine.es
 
-Exploratory. **Not deployed** anywhere.
+Deployed at **<https://llinatges.corpusbalear.org/>** (Cloudflare Worker, auto-deployed
+from `main`). All sources are open (INE), so unlike the medieval sibling this one is
+publishable.
 
 ## Data sources (all INE, plus NGIB coordinates)
 
@@ -38,7 +40,7 @@ comparison available is medieval (14th c., the sister repo) ↔ 2025.
 ## Pipeline
 
 Dev environment is pinned with **Nix**: `nix develop` gives Python + `numpy`/`pandas`/`scipy`
-(`flake.nix`, locked to a nixpkgs rev in `flake.lock` — the same rev as `llinatges-balears`).
+(`flake.nix`, locked to a nixpkgs rev in `flake.lock` — the same rev as `llinatges-medievals`).
 `requirements.txt` is a pip fallback for non-Nix setups. The fetchers use only the standard library;
 only `build_modern.py`/`isonymy.py` need the scientific stack.
 
