@@ -133,8 +133,15 @@ the biparental isonymy block; without the file it is simply skipped and the sing
 
 ## Notes
 
-- `web/` is a standalone Leaflet + d3 viewer of `site_data/modern_2025.json` (tabs: map, municipalities,
-  endemism, origin, isonymy, MDS, conclusions, methodology). Self-contained, no build step; cache-busted.
+- `web/` is a standalone viewer of `site_data/modern_2025.json` (tabs: map, municipalities,
+  endemism, origin, isonymy, MDS, conclusions, methodology): vendored Leaflet for the map, hand-built SVG
+  for the charts. Self-contained, no build step. Light and dark themes (follows the system; the header
+  button overrides it, applied before first paint by `theme.js`).
+- `web/_headers` sets caching (assets revalidate by ETag; vendored Leaflet cached 30 days) and the
+  security headers. The CSP is strict on scripts — **no inline `<script>`/handlers and no third-party
+  origins** except the OpenStreetMap tiles; inline `style=""` attributes are allowed. New web code must
+  respect it. Preview locally with the real headers: `npx wrangler dev` from the repo root
+  (<http://127.0.0.1:8787>).
 - Language: repo content in English; Catalan toponyms/surnames kept as data.
 - Possible future extension to the rest of the Balearics (Menorca / Eivissa / Formentera) is scoped in
   `CLAUDE.md`'s backlog — feasible but INE-re-harvest-gated, and deferred.
