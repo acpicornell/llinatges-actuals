@@ -49,6 +49,14 @@ npx wrangler dev                         # preview web/ with the real headers, :
 
 ## Licence and citation
 
+The edition is published under
+[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) — non-commercial reuse
+with attribution — as stated in the site footer (© 2026 Antoni C. Picornell Company).
+The repository carries no `LICENSE` file and states no separate licence for the code.
+
 The surname and population data come from the INE and are credited:
 
 > Elaboración propia con datos extraídos del sitio web del INE: www.ine.es
+
+How to cite, as given in the site footer: Picornell Company, A. C. *Isonímia mallorquina
+actual* (INE 2025), edició digital. Corpus Balear · llinatges.corpusbalear.org
