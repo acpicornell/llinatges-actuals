@@ -20,6 +20,20 @@ function init(){
   buildMap(); buildMunis(); buildEndem(); buildOrigin(); buildIso(); buildMDS(); buildConclusions(); buildMethod(); wireTabs(); wireSearch();
 }
 
+// Light/dark toggle. With no stored choice the page follows the system; the button
+// flips whatever is showing and remembers it (theme.js re-applies it before paint).
+// Wired at load, independently of the data fetch, so it works even if that fails.
+(function wireTheme(){
+  const btn=document.getElementById("theme"), root=document.documentElement; if(!btn) return;
+  btn.addEventListener("click",()=>{
+    const showing=root.getAttribute("data-theme")||
+      (window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+    const next=showing==="dark"?"light":"dark";
+    root.setAttribute("data-theme",next);
+    try{localStorage.setItem("llinatges-theme",next);}catch(e){}
+  });
+})();
+
 const ORIGIN_COLOR={"català":"#3fae74","castellà":"#c96a5a","magrebí":"#d8a13a",
   "subsaharià":"#b5762f","asiàtic":"#c76fb0","europeu":"#5b8fd0","sense classificar":"#7a8a80"};
 const oc=o=>ORIGIN_COLOR[o]||"#7a8a80";
@@ -64,8 +78,8 @@ function buildOrigin(){
     resultats de l'estudi</b> (la isonímia i l'aïllament per distància van per endemisme, no per origen).</p>
     <h3 class="osub" style="margin-top:4px">Com decidim l'origen: 3 capes, de la més sòlida a la més fluixa</h3>
     <div class="layers3">
-      <div class="concept" style="border-left-color:#6aa9d0">
-        <h4><span>Capa 1 · El que mesura l'INE</span><span class="lstat" style="color:#6aa9d0">mesurat</span></h4>
+      <div class="concept" style="border-left-color:var(--layer1)">
+        <h4><span>Capa 1 · El que mesura l'INE</span><span class="lstat" style="color:var(--layer1)">mesurat</span></h4>
         <p>On es concentra el cognom (Mallorca vs Espanya i per província). <b>Dada pura de l'INE</b>, qualsevol la
         refà igual. És la base de les dues capes de sota — encara no diu «català» ni «castellà».</p>
       </div>
@@ -195,7 +209,7 @@ function buildConclusions(){
   const pc=x=>Math.round(x*100)+"%";
   const n2=x=>x.toFixed(2).replace('.',',');
   const cap=s=>s.charAt(0)+s.slice(1).toLowerCase().replace(/_/g,' ');
-  const sensRows=D.lq_sensitivity.map(r=>`<tr${r.p<0.05?' style="color:#8fd6ac"':''}><td class="num">≥ ${r.lq}</td>`+
+  const sensRows=D.lq_sensitivity.map(r=>`<tr${r.p<0.05?' style="color:var(--hi)"':''}><td class="num">≥ ${r.lq}</td>`+
     `<td class="num">${r.n_surnames}</td><td class="num">${r.r}</td><td class="num">${r.p}${r.p<0.05?' ✓':''}</td></tr>`).join("");
   // --- the real driver: town SIZE, not distance to Palma ---
   const km=(p,q)=>Math.hypot((p[0]-q[0])*111,(p[1]-q[1])*85), pal=CO.Palma;
@@ -310,7 +324,7 @@ function buildConclusions(){
   els mateixos ${a.n} municipis:</p>
   <table><thead><tr><th>cognoms usats</th><th class="num">r</th><th class="num">p</th></tr></thead><tbody>
     <tr><td>Tots els cognoms</td><td class="num">${a.r}</td><td class="num">${a.p} <span class="ns">nul</span></td></tr>
-    <tr style="color:#8fd6ac"><td>Només autòctons (LQ≥${D.lq_bands.auto})</td><td class="num">${u.r}</td><td class="num">${u.p} ✓</td></tr>
+    <tr style="color:var(--hi)"><td>Només autòctons (LQ≥${D.lq_bands.auto})</td><td class="num">${u.r}</td><td class="num">${u.p} ✓</td></tr>
   </tbody></table>
   <p class="result-box">Amb <b>tots</b> els cognoms, <b>res</b> (r=${a.r}): els ubics (García, Martínez…) igualen
   tots els pobles. Aïllant el fons <b>autòcton</b> apareix <b>r=${u.r}, p=${u.p}</b> — aïllament per distància
@@ -595,9 +609,9 @@ function buildMap(){
 }
 function popup(l){
   const st=D.muni_stats[l], pop=D.municipality_pop[l], cov=D.coverage[l];
-  const tops=st.top.map(([s,f,lq])=>`${s} <span style="color:#95a89d">${f}${lq!=null?` · LQ ${lq}`:''}</span>`).join("<br>");
+  const tops=st.top.map(([s,f,lq])=>`${s} <span style="color:#5f7268">${f}${lq!=null?` · LQ ${lq}`:''}</span>`).join("<br>");
   return `<b>${l}</b><br>població ${pop.toLocaleString('ca')} · autoctonia <b style="color:${ramp(st.autoch)}">${Math.round(st.autoch*100)}%</b>`+
-    `<br><span style="color:#95a89d">cobertura INE: ${Math.round(cov*100)}%</span>`+
+    `<br><span style="color:#5f7268">cobertura INE: ${Math.round(cov*100)}%</span>`+
     `<br><br><b>1rs cognoms:</b><br>${tops}`;
 }
 
@@ -683,7 +697,7 @@ function drawTree(dendro, autochOf){
   let h=`<svg class="tree" viewBox="0 0 ${W} ${H}" height="${H}">`;
   dendro.icoord.forEach((ic,k)=>{const dc=dendro.dcoord[k];
     const pts=[0,1,2,3].map(j=>`${sx(dc[j]).toFixed(1)},${sy(ic[j]).toFixed(1)}`).join(" ");
-    h+=`<polyline points="${pts}" fill="none" stroke="#3d5145" stroke-width="1.1"/>`;});
+    h+=`<polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.1"/>`;});
   dendro.ivl.forEach((name,i)=>{const y=sy(10*i+5);
     h+=`<circle cx="${padL}" cy="${y.toFixed(1)}" r="3.5" fill="${ramp(autochOf(name))}" stroke="#000"/>`+
        `<text x="${padL-7}" y="${(y+3).toFixed(1)}" text-anchor="end" class="tree-lab">${name}</text>`;});
@@ -871,10 +885,10 @@ function drawConvergence(tc){
   const rows=tc.rows, n=rows.length, rf=tc.r_full;
   const W=720,H=320,pl=52,pr=54,pt=20,pb=48, iw=W-pl-pr, ih=H-pt-pb;
   const X=i=>pl+(n>1?i/(n-1):0)*iw, yR=v=>pt+ih-(v/0.5)*ih, yC=v=>pt+ih-v*ih;
-  const CR="#e0913c", CC="#6b8cae", MUT="#95a89d";
+  const CR="#e0913c", CC="#6b8cae", MUT="currentColor";
   let g="";
   [0,0.1,0.2,0.3,0.4,0.5].forEach(v=>{const y=yR(v);
-    g+=`<line x1="${pl}" y1="${y.toFixed(1)}" x2="${pl+iw}" y2="${y.toFixed(1)}" stroke="#ffffff" stroke-opacity=".07"/>`+
+    g+=`<line x1="${pl}" y1="${y.toFixed(1)}" x2="${pl+iw}" y2="${y.toFixed(1)}" stroke="currentColor" stroke-opacity=".18"/>`+
        `<text x="${pl-8}" y="${(y+3).toFixed(1)}" text-anchor="end" fill="${CR}" font-size="10">${v.toFixed(1)}</text>`;});
   [0,0.25,0.5,0.75,1].forEach(v=>g+=`<text x="${pl+iw+8}" y="${(yC(v)+3).toFixed(1)}" text-anchor="start" fill="${CC}" font-size="10">${v.toFixed(2)}</text>`);
   let xl="";
@@ -885,12 +899,12 @@ function drawConvergence(tc){
     `<text x="${pl+iw}" y="${(yrf-5).toFixed(1)}" text-anchor="end" fill="${CR}" font-size="10">cens complet · r=${rf.toFixed(2).replace('.',',')}</text>`;
   const poly=(key,y,c)=>`<polyline points="${rows.map((r,i)=>`${X(i).toFixed(1)},${y(r[key]).toFixed(1)}`).join(" ")}" fill="none" stroke="${c}" stroke-width="2"/>`;
   const dots=(key,y,c,lab)=>rows.map((r,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${y(r[key]).toFixed(1)}" r="3" fill="${c}"><title>top-${r.n||'complet'} · ${lab}=${r[key]}</title></circle>`).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto;margin:6px 0">
+  return `<svg viewBox="0 0 ${W} ${H}" style="color:var(--muted);width:100%;max-width:${W}px;height:auto;margin:6px 0">
     ${g}${ref}
     ${poly('mcorr',yC,CC)}${poly('r',yR,CR)}
     ${dots('mcorr',yC,CC,'corr. matriu')}${dots('r',yR,CR,'Mantel r')}
-    <line x1="${pl}" y1="${pt}" x2="${pl}" y2="${pt+ih}" stroke="#ffffff" stroke-opacity=".25"/>
-    <line x1="${pl}" y1="${pt+ih}" x2="${pl+iw}" y2="${pt+ih}" stroke="#ffffff" stroke-opacity=".25"/>
+    <line x1="${pl}" y1="${pt}" x2="${pl}" y2="${pt+ih}" stroke="currentColor" stroke-opacity=".5"/>
+    <line x1="${pl}" y1="${pt+ih}" x2="${pl+iw}" y2="${pt+ih}" stroke="currentColor" stroke-opacity=".5"/>
     ${xl}
     <g font-size="11"><rect x="${pl+10}" y="${pt+4}" width="10" height="10" fill="${CR}"/>
       <text x="${pl+24}" y="${pt+13}" fill="${CR}">Mantel r (aïllament per distància, eix esq.)</text>
@@ -909,17 +923,17 @@ function drawBipScatter(A,B,r){
   const lo=Math.min(Math.min(...xs),Math.min(...ys)), hi=Math.max(Math.max(...xs),Math.max(...ys));
   const S=440,pad=52,rp=14,tp=14,iw=S-pad-rp,ih=S-pad-tp-24;
   const sx=v=>pad+((v-lo)/((hi-lo)||1))*iw, sy=v=>tp+ih-((v-lo)/((hi-lo)||1))*ih;
-  const AC="#6b8cae", MUT="#95a89d";
+  const AC="#6b8cae", MUT="currentColor";
   let ax="";
   for(let t=0;t<=4;t++){const v=lo+(hi-lo)*t/4;
     ax+=`<text x="${(pad-8).toFixed(1)}" y="${(sy(v)+3).toFixed(1)}" text-anchor="end" fill="${MUT}" font-size="10">${v.toFixed(1).replace('.',',')}</text>`
       + `<text x="${sx(v).toFixed(1)}" y="${(tp+ih+16).toFixed(1)}" text-anchor="middle" fill="${MUT}" font-size="10">${v.toFixed(1).replace('.',',')}</text>`;}
   const diag=`<line x1="${sx(lo).toFixed(1)}" y1="${sy(lo).toFixed(1)}" x2="${sx(hi).toFixed(1)}" y2="${sy(hi).toFixed(1)}" stroke="${MUT}" stroke-dasharray="4 4" stroke-opacity=".7"/>`;
   const dots=pts.map(p=>`<circle cx="${sx(p[0]).toFixed(1)}" cy="${sy(p[1]).toFixed(1)}" r="2.1" fill="${AC}" fill-opacity=".26"/>`).join("");
-  return `<svg viewBox="0 0 ${S} ${S}" style="width:100%;max-width:${S}px;height:auto;margin:6px 0">
+  return `<svg viewBox="0 0 ${S} ${S}" style="color:var(--muted);width:100%;max-width:${S}px;height:auto;margin:6px 0">
     ${diag}${dots}${ax}
-    <line x1="${pad}" y1="${tp}" x2="${pad}" y2="${(tp+ih).toFixed(1)}" stroke="#ffffff" stroke-opacity=".25"/>
-    <line x1="${pad}" y1="${(tp+ih).toFixed(1)}" x2="${(pad+iw).toFixed(1)}" y2="${(tp+ih).toFixed(1)}" stroke="#ffffff" stroke-opacity=".25"/>
+    <line x1="${pad}" y1="${tp}" x2="${pad}" y2="${(tp+ih).toFixed(1)}" stroke="currentColor" stroke-opacity=".5"/>
+    <line x1="${pad}" y1="${(tp+ih).toFixed(1)}" x2="${(pad+iw).toFixed(1)}" y2="${(tp+ih).toFixed(1)}" stroke="currentColor" stroke-opacity=".5"/>
     <text x="${(pad+iw/2).toFixed(1)}" y="${(tp+ih+38).toFixed(1)}" text-anchor="middle" fill="${MUT}" font-size="11">distància Lasker · línia paterna (1r cognom)</text>
     <text transform="translate(14,${(tp+ih/2).toFixed(1)}) rotate(-90)" text-anchor="middle" fill="${MUT}" font-size="11">línia materna (2n cognom)</text>
     <text x="${(pad+iw-4).toFixed(1)}" y="${(tp+16).toFixed(1)}" text-anchor="end" fill="${AC}" font-size="12">r=${String(r).replace('.',',')} · ${(n*(n-1)/2)} parells</text>
@@ -930,7 +944,7 @@ function buildMethod(){
   const B=D.biparental;
   const TC=D.topn_convergence, tcr=n=>(TC.rows.find(r=>r.n===n)||{}).r;
   const d2=x=>x.toFixed(2).replace('.',','), cc=x=>String(x).replace('.',',');
-  const tcTable=TC.rows.map(r=>`<tr${r.n===50?' style="color:#e0b070"':''}><td class="num">${r.n||'complet'}</td>`+
+  const tcTable=TC.rows.map(r=>`<tr${r.n===50?' style="color:var(--hi2)"':''}><td class="num">${r.n||'complet'}</td>`+
     `<td class="num">${cc(r.r)}</td><td class="num">${cc(r.mcorr)}</td><td class="num">${r.k}</td></tr>`).join("");
   document.getElementById("metod-body").innerHTML = `
     <h2>Metodologia i límits</h2>
@@ -1106,7 +1120,7 @@ function buildMethod(){
       <tbody>
         <tr><td><b>paterna</b> (1r cognom, <code>tipo=1</code>)</td><td class="num">${cc(B.first.mantel.r)}</td><td class="num">${cc(B.first.mantel.p)}</td><td class="num">${B.first.n_surnames}</td></tr>
         <tr><td><b>materna</b> (2n cognom, <code>tipo=2</code>)</td><td class="num">${cc(B.second.mantel.r)}</td><td class="num">${cc(B.second.mantel.p)}</td><td class="num">${B.second.n_surnames}</td></tr>
-        <tr style="color:#e0b070"><td><b>combinada</b> (isonímia total)</td><td class="num">${cc(B.combined.mantel.r)}</td><td class="num">${cc(B.combined.mantel.p)}</td><td class="num">${B.combined.n_surnames}</td></tr>
+        <tr style="color:var(--hi2)"><td><b>combinada</b> (isonímia total)</td><td class="num">${cc(B.combined.mantel.r)}</td><td class="num">${cc(B.combined.mantel.p)}</td><td class="num">${B.combined.n_surnames}</td></tr>
       </tbody></table>
     <p><b>La línia materna, tota sola, reprodueix l'aïllament per distància</b> (r=${cc(B.second.mantel.r)},
     p=${cc(B.second.mantel.p)}). És una mica més feble que la paterna (r=${cc(B.first.mantel.r)}) —normal: el
