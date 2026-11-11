@@ -3,7 +3,8 @@
 **Modern Mallorcan surname isonymy** from the **full INE surname census (2025)**. Population
 genetics on present-day surname distribution across the 51 Mallorca municipalities. Sister
 project to the 14th-century corpus (`llinatges-medievals`); kept **separate** on purpose.
-Read `README.md` first (sources + pipeline + results).
+Read `README.md` first, then `docs/DATA.md` (sources), `docs/PIPELINE.md` (pipeline) and
+`docs/ANALYSIS.md` (results).
 
 ## Conventions (respect them)
 
