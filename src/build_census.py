@@ -40,10 +40,9 @@ def main():
     pop = {r["municipality"]: int(r["population"])
            for r in csv.DictReader(open(D / "muni_pop_padron.csv", encoding="utf-8"))}
 
-    # surname_norm -> {municipality: count}. First writer wins on collisions; we load the 442
-    # first so their canonical IBESTAT spelling/rows take precedence over any ñ-variant the
-    # harvest re-derived (the harvest excluded the 442 by norm, but the ñ-decode bug let ~11
-    # through — those are dropped here by the `seen` guard).
+    # surname_norm -> {municipality: count}. First writer wins on collisions: two harvest rows
+    # that normalise to the same key (e.g. an ñ-variant spelling) are ingested once, and the
+    # `seen` guard drops the later one.
     counts = {}     # norm -> {muni: count}
     label = {}      # norm -> surname_ine (display spelling)
     seen = set()
@@ -80,7 +79,6 @@ def main():
         if r.get("n_mall_muni") in ("-1", "0"):   # errored or absent from Mallorca
             continue
         ingest(r["surname_ine"], r.get("mall_json", ""))
-    n442 = 0
 
     rows = []
     for k, d in counts.items():

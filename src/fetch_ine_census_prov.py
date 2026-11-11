@@ -2,11 +2,12 @@
 """EXPLORATION — province harvest for the FULL INE census (origin axis).
 
 For every surname present in Mallorca (census_muni_2025.csv) that we do NOT already have
-province data for (ine_apellidos.csv = the 442; endemic_prov.csv = the 276 candidates),
+province data for (endemic_prov.csv = the 276 earlier candidates; census_prov.csv = this
+script's own output, so a re-run resumes),
 fetch its per-PROVINCE rate (INE mapaWidget&tipo=1). Combined with the national total
 (taken from the national >=20 file in build_modern), that gives LQ_Cat / LQ_Bal / LQ_Val,
 the Catalan-domain concentration that separates a Catalan/Mallorcan surname from a
-Castilian or foreign one — the origin axis, now over the whole census, not just the 442.
+Castilian or foreign one — the origin axis, over the whole census.
 
 Only ONE request per surname (provinces); the national total comes from the local file, so
 this runs in ~half the time of a widget+map harvest. Resumable (appends to census_prov.csv),

@@ -304,7 +304,6 @@ function buildConclusions(){
   const coreN=regSize[0][1].length;                       // biggest cluster = the mixed core
   const sollerReg=(regG[REG['Sóller']]||[]).slice().sort();
   const llevantReg=regG[REG['Manacor']]||[];
-  const isolates=regSize.filter(([,ts])=>ts.length===1).map(([,ts])=>ts[0]);
   const LK=D.auto.lasker, LKl=D.auto.locs;
   const lval=(i,j)=>(LK[i][j]+LK[j][i])/2;
   let lpairs=[];

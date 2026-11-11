@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """EXPLORATION. FULL endemic harvest: scan EVERY national first-surname (INE ≥20 file,
-~86k) that is NOT already in the 442 IBESTAT list, through the INE municipality view, to
-find the ones that are Mallorca-endemic (and thus carry within-island isonymy signal that
-the IBESTAT top-50 can't see because they never make any town's local top-50).
+~86k), through the INE municipality view, to get each one's Mallorca-town rates and find
+the ones that are Mallorca-endemic (and thus carry within-island isonymy signal even though
+they never make any town's local top-50). No external list is excluded from the seed.
 
 Per candidate: one `mapaWidget&vista=muni` call → the Mallorca-town rates → reconstruct
 counts (rate‰ × municipal population) → freq_Mallorca and LQ_Mallorca. Endemic = LQ ≥ 1.3

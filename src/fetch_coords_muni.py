@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""EXPLORATION. NGIB coordinates for the Mallorca municipalities present in the
-IBESTAT data. Same open source/approach as the medieval side (IDEIB NGIB REST),
+"""EXPLORATION. NGIB coordinates for the Mallorca municipalities listed in
+web/site_data/modern_2025.json (municipality_pop). Same open source/approach as the medieval side (IDEIB NGIB REST),
 but here we take each municipality SEAT nucleus. Writes data/coords_muni.csv.
 """
 import json, csv, unicodedata, urllib.parse, urllib.request

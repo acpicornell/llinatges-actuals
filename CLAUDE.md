@@ -7,7 +7,8 @@ Read `README.md` first (sources + pipeline + results).
 
 ## Conventions (respect them)
 
-- **Language:** repo content (code, comments, docs, UI, commits) in **English**.
+- **Language:** repo content (code, comments, docs, commits) in **English**; the web UI copy
+  is in **Catalan** (`web/index.html` is `lang="ca"`).
   **Toponyms and surnames stay in their original Catalan** — they are data / proper nouns
   (`Sóller`, `Montuïri`, `Cañellas`), never translated.
 - **Surgical, iterative edits.** No massive rewrites, no over-engineering.
@@ -123,7 +124,7 @@ Helpers: `src/muni_ids.py` (INE contour region-id → town), `src/screen_foreign
 - Optional: surname spelling-variant merging (e.g. `Matemalas`≈`Matamalas`) — a normalization
   issue, not origin. The medieval repo has a `normalize.py` for the analogous problem.
 - The project was split out of `llinatges-medievals/explore/ibestat_modern/` on 2026-07-06;
-  that old copy may still exist as a backup until confirmed removable.
+  that old copy has since been removed from `llinatges-medievals`.
 - **Possible extension — the rest of the Balearics (Menorca / Eivissa / Formentera).** Deferred
   (owner said "just curiosity" for now). Feasibility already scoped: our data is Mallorca-only
   (51 munis); the INE infra already fetches the all-Spain contour (CONTORNOS/19) and we merely

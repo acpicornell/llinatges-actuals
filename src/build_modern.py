@@ -176,7 +176,7 @@ def main():
     # ~0.95 (not the ~1.9 the region-wide IVE count gave), and it recovers rare Balearic
     # surnames a top-N truncation would undercount (Muntaner LQ_Bal~29).
     nat=load_national()
-    # Origin signal from the INE surname API (fetch_ine_apellidos.py): national 1st-surname
+    # Origin signal from the INE surname API (fetch_ine_census_prov.py): national 1st-surname
     # total + per-province rate (per mil). Replaces Idescat/IVE/ds007 with one source.
     # Province data (per-province rate for the origin axis), merged first-writer-wins by norm:
     #   census_prov.csv    the full-census province harvest (every present-in-Mallorca surname,
