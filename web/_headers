@@ -1,15 +1,38 @@
 # Cloudflare Workers Static Assets reads the same _headers format as Pages.
+# When several rules match a path their headers are MERGED (a header set twice
+# is joined with a comma), so a more specific rule that overrides a header must
+# first detach it with `! Header-Name`.
 #
 # Our own assets carry no content hash in their filenames, so they must
 # revalidate on every load: a deploy changes the ETag and the browser refetches,
 # otherwise it gets a 304 and reuses the cached body. That keeps HTML, JS, CSS
 # and the 2.5 MB site_data JSON always in step with the live deploy while
 # costing a few hundred bytes per visit instead of ~2.7 MB.
+#
+# Security headers (same policy family as the sibling `cronicon` site). The site
+# is static and read-only: no cookies, no accounts, no forms, no third-party
+# code (Leaflet is vendored). Scripts are strict -- `script-src 'self'`, no
+# inline script or handler (the JSON-LD block is a data block and never runs) --
+# which closes the main XSS vectors. Styles: stylesheets are 'self' only, but
+# app.js builds charts and tables with `style="..."` attributes, so
+# `style-src-attr 'unsafe-inline'` is admitted (style-only injection, no script).
+# One foreign origin, for one thing: the OpenStreetMap tiles under `img-src`.
+# No `upgrade-insecure-requests` (unlike cronicon): every resource here is
+# relative or already https, so it would add nothing -- HSTS plus Cloudflare's
+# "Always Use HTTPS" handle the scheme -- and it breaks local `wrangler dev` on
+# http://127.0.0.1 by upgrading the page's own CSS/JS requests to https.
 /*
   Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
 
 # Vendored Leaflet is pinned and only changes when we deliberately re-vendor it,
 # so it can be cached outright. Bounded to 30 days rather than 'immutable':
 # without a hashed filename an upgrade would otherwise stay invisible for a year.
 /vendor/*
+  ! Cache-Control
   Cache-Control: public, max-age=2592000

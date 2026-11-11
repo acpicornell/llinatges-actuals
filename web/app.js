@@ -6,6 +6,9 @@ fetch("site_data/modern_2025.json").then(r => r.json()).then(d => { D = d; init(
   .catch(e => { document.getElementById("map").innerHTML =
     '<p style="padding:20px">No s\'ha pogut carregar <code>site_data/modern_2025.json</code> — serveix la carpeta <code>web/</code> amb un servidor.</p>'; console.error(e); });
 
+// Escape text before it goes into innerHTML. Our own data (INE surnames, town names)
+// is trusted; anything the reader types is not.
+const esc = t => String(t).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const lerp = (a, b, t) => a + (b - a) * t;
 // endemism ramp: red (ubiquitous / non-endemic) -> green (endemic / autochthonous)
 function ramp(t){
@@ -532,7 +535,7 @@ function applySurname(query){
       mk.setRadius(5+Math.sqrt(f)*1.4); mk.setTooltipContent(`${l} · ${f}`); }
     else { mk.setStyle({fillColor:"#39463d",fillOpacity:.3,color:"#000",weight:1}); mk.setRadius(4); mk.setTooltipContent(l); }
   });
-  if(!matched.length){ box.innerHTML=`<p class="none">Cap cognom «${query}» al cens de 2025 (els ${D.all.n_surnames.toLocaleString('ca')} del cens de cognoms de l'INE).</p>`; return; }
+  if(!matched.length){ box.innerHTML=`<p class="none">Cap cognom «${esc(query)}» al cens de 2025 (els ${D.all.n_surnames.toLocaleString('ca')} del cens de cognoms de l'INE).</p>`; return; }
   const heads=matched.map(sn=>{const e=D.endemism[sn];
     const kind=e.origin==='català'?'auto':e.origin==='castellà'?'cast':'none';
     return `<span class="sn ${kind}">${sn.replace(/_/g,' ')}</span>${e.xueta?' <span class="xu" title="«Xueta»: terme d\'origen despectiu, avui reapropiat i estàndard. Llinatge de la llista canònica de 15 que inclou descendents de conversos, no que cada portador ho sigui.">xueta</span>':''} <span class="lqv">LQ ${e.lq??'—'}</span> · ${e.mall.toLocaleString('ca')}${basisTag(e)}`;
