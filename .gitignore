@@ -8,3 +8,6 @@ __pycache__/
 
 # direnv (local cache; .envrc itself IS committed)
 .direnv/
+
+# Wrangler local state/cache (contains Cloudflare account info) — never commit
+.wrangler/
